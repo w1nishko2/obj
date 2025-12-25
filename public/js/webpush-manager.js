@@ -110,7 +110,20 @@ class WebPushManager {
                 await this.fetchVapidPublicKey();
             }
 
-            // Создаем подписку
+            // Проверяем существующую подписку
+            const existingSubscription = await this.swRegistration.pushManager.getSubscription();
+            
+            if (existingSubscription) {
+                console.log('Найдена старая подписка, удаляем её...');
+                try {
+                    await existingSubscription.unsubscribe();
+                    console.log('Старая подписка удалена');
+                } catch (error) {
+                    console.warn('Не удалось удалить старую подписку:', error);
+                }
+            }
+
+            // Создаем новую подписку
             const subscription = await this.swRegistration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
@@ -125,6 +138,21 @@ class WebPushManager {
             return subscription;
         } catch (error) {
             console.error('Ошибка подписки:', error);
+            
+            // Если ошибка связана с applicationServerKey, пробуем ещё раз
+            if (error.message && error.message.includes('applicationServerKey')) {
+                console.log('Повторная попытка после очистки...');
+                try {
+                    const oldSub = await this.swRegistration.pushManager.getSubscription();
+                    if (oldSub) {
+                        await oldSub.unsubscribe();
+                    }
+                    return await this.subscribe();
+                } catch (retryError) {
+                    console.error('Повторная попытка не удалась:', retryError);
+                }
+            }
+            
             throw error;
         }
     }
