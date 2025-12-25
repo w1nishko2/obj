@@ -313,9 +313,12 @@
                 return;
             }
 
-            // Если ещё не спрашивали - показываем браузерный диалог сразу
-            if (Notification.permission === 'default') {
-                console.log('⏳ Запрашиваем разрешение у браузера...');
+            // Если ещё не спрашивали - показываем браузерный диалог сразу (только для десктопа)
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                            (window.matchMedia && window.matchMedia('(max-width: 768px)').matches);
+            
+            if (!isMobile && Notification.permission === 'default') {
+                console.log('⏳ Запрашиваем разрешение у браузера (десктоп)...');
                 try {
                     const permission = await Notification.requestPermission();
                     console.log('📝 Результат запроса:', permission);
@@ -345,18 +348,25 @@
                 console.warn('3. Выберите "Разрешить"');
                 console.warn('4. Обновите страницу (F5)');
                 
-                // Показываем баннер пользователю
-                const banner = document.createElement('div');
-                banner.style.cssText = 'position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 15px 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; max-width: 90%; text-align: center;';
-                banner.innerHTML = `
-                    <strong>⚠️ Уведомления заблокированы</strong><br>
-                    <small>Кликните на замок в адресной строке → Разрешить уведомления → F5</small>
-                    <button onclick="this.parentElement.remove()" style="margin-left: 15px; background: #fff; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Закрыть</button>
-                `;
-                document.body.appendChild(banner);
+                // Показываем баннер пользователю (только для десктопа)
+                if (!isMobile) {
+                    const banner = document.createElement('div');
+                    banner.style.cssText = 'position: fixed; top: 60px; left: 50%; transform: translateX(-50%); background: #ffc107; color: #000; padding: 15px 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10000; max-width: 90%; text-align: center;';
+                    banner.innerHTML = `
+                        <strong>⚠️ Уведомления заблокированы</strong><br>
+                        <small>Кликните на замок в адресной строке → Разрешить уведомления → F5</small>
+                        <button onclick="this.parentElement.remove()" style="margin-left: 15px; background: #fff; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Закрыть</button>
+                    `;
+                    document.body.appendChild(banner);
+                }
             }
         });
     </script>
+    @endauth
+
+    <!-- Мобильный баннер для подписки на уведомления -->
+    @auth
+        @include('components.mobile-push-banner')
     @endauth
 </body>
 </html>
