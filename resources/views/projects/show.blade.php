@@ -1653,23 +1653,40 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
 
-                        <!-- Вторая подсказка -->
+                        <!-- Видео инструкция -->
                         <div class="tutorial-item mb-4 text-start">
                             <div class="d-flex align-items-start mb-3">
                                 <div class="tutorial-number me-3" style="background: #007bff; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
                                     2
                                 </div>
                                 <div>
-                                    <h5 class="mb-2">Изменение данных</h5>
-                                    <p class="text-muted mb-3">Если хотите изменить данные, элемент всегда можно провалиться в настройки задачи/этапа</p>
+                                    <h5 class="mb-2">Видео инструкция</h5>
+                                    <p class="text-muted mb-3">Подробное видео о работе с проектами (7 минут)</p>
                                 </div>
                             </div>
-                            <div class="tutorial-image-placeholder" style="background: #f8f9fa; border-radius: 8px; padding: 2rem 1rem; text-align: center; border: 2px dashed #dee2e6;">
-                                <img src="/images/tutorial-edit.png" alt="Изменение данных" style="max-width: 100%; height: auto; border-radius: 8px; display: none;" onerror="this.style.display='none'" onload="this.style.display='block'; this.parentElement.querySelector('.placeholder-text').style.display='none';">
-                                <div class="placeholder-text text-muted">
-                                    <i class="bi bi-gear" style="font-size: 2.5rem; display: block; margin-bottom: 0.5rem; opacity: 0.5;"></i>
-                                    <small>Место для изображения tutorial-edit.png</small>
+                            <div class="tutorial-video-container" style="position: relative; width: 100%; max-width: 360px; margin: 0 auto; aspect-ratio: 9/16; background: #000; border-radius: 12px; overflow: hidden;">
+                                <video 
+                                    id="tutorialVideo"
+                                    controls 
+                                    playsinline
+                                    preload="metadata"
+                                    style="width: 100%; height: 100%; object-fit: contain;"
+                                    poster="/images/tutorial-video-poster.jpg">
+                                    <source src="/videos/tutorial.mp4" type="video/mp4">
+                                    <p class="text-muted p-3">Ваш браузер не поддерживает воспроизведение видео. <a href="/videos/tutorial.mp4" download>Скачайте видео</a></p>
+                                </video>
+                                <!-- Индикатор загрузки -->
+                                <div id="videoLoader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+                                    <div class="spinner-border text-light" role="status">
+                                        <span class="visually-hidden">Загрузка...</span>
+                                    </div>
                                 </div>
+                            </div>
+                            <div class="text-center mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-info-circle"></i>
+                                    Загрузите видео tutorial.mp4 в папку /public/videos/
+                                </small>
                             </div>
                         </div>
                     </div>
