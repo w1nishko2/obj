@@ -1621,11 +1621,11 @@ document.addEventListener('DOMContentLoaded', function() {
 <div class="modal fade" id="tutorialModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-fullscreen m-0">
         <div class="modal-content">
-            <div class="d-flex flex-column h-100" style="overflow-y: auto;">
-                <div class="modal-header border-0 pb-2">
-                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" onclick="closeTutorial()"></button>
-                </div>
-                <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1 py-4">
+            <div class="modal-header border-0 pb-2 position-sticky top-0 bg-white" style="z-index: 1000;">
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-3" onclick="closeTutorial()"></button>
+            </div>
+            <div class="modal-body pt-0 overflow-auto" style="padding-bottom: 100px;">
+                <div class="d-flex justify-content-center py-4">
                     <div class="wizard-container text-center" style="max-width: 600px; width: 100%; padding: 1rem;">
                         <div class="mb-4">
                             <i class="bi bi-lightbulb" style="font-size: 4rem; color: #007bff;"></i>
@@ -1672,8 +1672,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                     preload="metadata"
                                     style="width: 100%; height: 100%; object-fit: contain;"
                                     poster="/images/tutorial-video-poster.jpg">
-                                    <source src="/videos/tutorial.mp4" type="video/mp4">
-                                    <p class="text-muted p-3">Ваш браузер не поддерживает воспроизведение видео. <a href="/videos/tutorial.mp4" download>Скачайте видео</a></p>
+                                    <source src="/videos/instruction.mp4" type="video/mp4">
+                                    <p class="text-muted p-3">Ваш браузер не поддерживает воспроизведение видео. <a href="/videos/instruction.mp4" download>Скачайте видео</a></p>
                                 </video>
                                 <!-- Индикатор загрузки -->
                                 <div id="videoLoader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
@@ -1685,17 +1685,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div class="text-center mt-3">
                                 <small class="text-muted">
                                     <i class="bi bi-info-circle"></i>
-                                    Загрузите видео tutorial.mp4 в папку /public/videos/
+                                    Видео загружается потоково - страница не зависнет (93 МБ)
                                 </small>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="minimal-btn minimal-btn-primary" onclick="closeTutorial()">
-                        <i class="bi bi-check2-circle"></i>
-                        Спасибо
-                    </button>
                 </div>
             </div>
         </div>

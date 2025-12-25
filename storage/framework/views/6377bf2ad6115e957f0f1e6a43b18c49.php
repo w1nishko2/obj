@@ -403,6 +403,36 @@ unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
 
+            <!-- Push-уведомления -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bell"></i> Push-уведомления</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Управляйте уведомлениями о событиях в ваших проектах</p>
+                    
+                    <div id="notificationStatus" class="mb-3">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <strong>Статус:</strong>
+                                <span id="statusText" class="ms-2">Проверка...</span>
+                            </div>
+                            <div id="notificationButtons">
+                                <!-- Кнопки будут добавлены через JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info" role="alert">
+                        <small>
+                            <i class="bi bi-info-circle"></i>
+                            <strong>О уведомлениях:</strong> Вы будете получать уведомления о новых задачах, изменениях этапов, 
+                            комментариях и других событиях в проектах, где вы являетесь участником.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
             <!-- Удаление аккаунта -->
             <div class="card mb-4 border-danger">
                 <div class="card-header bg-danger text-white">
@@ -581,6 +611,97 @@ function deleteAccount() {
     // Финальное подтверждение
     if (confirm('Вы уверены? Это последнее предупреждение! Все ваши данные будут удалены НАВСЕГДА!')) {
         document.getElementById('deleteAccountForm').submit();
+    }
+}
+
+// ========================================
+// УПРАВЛЕНИЕ PUSH-УВЕДОМЛЕНИЯМИ
+// ========================================
+document.addEventListener('DOMContentLoaded', async function() {
+    const statusText = document.getElementById('statusText');
+    const notificationButtons = document.getElementById('notificationButtons');
+    
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        statusText.innerHTML = '<span class="badge bg-secondary">Не поддерживается</span>';
+        notificationButtons.innerHTML = '<small class="text-muted">Ваш браузер не поддерживает push-уведомления</small>';
+        return;
+    }
+    
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+            statusText.innerHTML = '<span class="badge bg-success">Включены</span>';
+            notificationButtons.innerHTML = `
+                <button class="btn btn-danger btn-sm" onclick="disableNotifications()">
+                    <i class="bi bi-bell-slash"></i> Отключить
+                </button>
+            `;
+        } else {
+            statusText.innerHTML = '<span class="badge bg-warning">Отключены</span>';
+            notificationButtons.innerHTML = `
+                <button class="btn btn-primary btn-sm" onclick="enableNotifications()">
+                    <i class="bi bi-bell"></i> Включить
+                </button>
+            `;
+        }
+    } catch (error) {
+        console.error('Ошибка проверки подписки:', error);
+        statusText.innerHTML = '<span class="badge bg-secondary">Ошибка</span>';
+    }
+});
+
+async function enableNotifications() {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+            alert('Разрешение на уведомления не предоставлено');
+            return;
+        }
+        
+        // Используем глобальный WebPushManager если он доступен
+        if (window.webPushManager) {
+            await window.webPushManager.subscribe();
+            location.reload();
+        } else {
+            alert('Менеджер уведомлений недоступен. Перезагрузите страницу.');
+        }
+    } catch (error) {
+        console.error('Ошибка включения уведомлений:', error);
+        alert('Не удалось включить уведомления. Попробуйте позже.');
+    }
+}
+
+async function disableNotifications() {
+    if (!confirm('Вы уверены, что хотите отключить push-уведомления?')) {
+        return;
+    }
+    
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        
+        if (subscription) {
+            await subscription.unsubscribe();
+            
+            // Удаляем подписку на сервере
+            await fetch('/push/unsubscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    endpoint: subscription.endpoint
+                })
+            });
+            
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Ошибка отключения уведомлений:', error);
+        alert('Не удалось отключить уведомления. Попробуйте позже.');
     }
 }
 </script>

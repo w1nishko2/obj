@@ -434,8 +434,8 @@
                                             preload="metadata"
                                             style="width: 100%; height: 100%; object-fit: contain;"
                                             poster="/images/tutorial-video-poster.jpg">
-                                            <source src="/videos/tutorial.mp4" type="video/mp4">
-                                            <p class="text-muted p-3">Ваш браузер не поддерживает воспроизведение видео. <a href="/videos/tutorial.mp4" download>Скачайте видео</a></p>
+                                            <source src="/videos/instruction.mp4" type="video/mp4">
+                                            <p class="text-muted p-3">Ваш браузер не поддерживает воспроизведение видео. <a href="/videos/instruction.mp4" download>Скачайте видео</a></p>
                                         </video>
                                         <!-- Индикатор загрузки -->
                                         <div id="videoLoader" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
@@ -447,7 +447,7 @@
                                     <div class="text-center mt-3">
                                         <small class="text-muted">
                                             <i class="bi bi-info-circle"></i>
-                                            Загрузите видео tutorial.mp4 в папку /public/videos/
+                                            Видео загружается потоково - страница не зависнет (93 МБ)
                                         </small>
                                     </div>
                                 </div>
