@@ -1,0 +1,436 @@
+const CACHE_NAME = 'obekt-plus-v1';
+const urlsToCache = [
+  '/',
+  '/projects',
+  '/offline.html',
+  '/css/app.css',
+  '/js/app.js',
+  '/manifest.json',
+  '/images/icons/icon.svg'
+];
+
+// Установка Service Worker и кеширование ресурсов
+self.addEventListener('install', (event) => {
+  console.log('[Service Worker] Installing...');
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('[Service Worker] Caching app shell');
+        return cache.addAll(urlsToCache);
+      })
+      .catch((error) => {
+        console.error('[Service Worker] Cache failed:', error);
+      })
+  );
+  self.skipWaiting();
+});
+
+// Активация Service Worker и очистка старых кешей
+self.addEventListener('activate', (event) => {
+  console.log('[Service Worker] Activating...');
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[Service Worker] Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    }).then(() => {
+      // Запускаем периодическую проверку сразу после активации
+      console.log('[Service Worker] Starting automatic background checks');
+      startPeriodicCheck(10000); // Проверка каждые 10 секунд
+    })
+  );
+  return self.clients.claim();
+});
+
+// Стратегия кеширования: Network First, затем Cache
+self.addEventListener('fetch', (event) => {
+  // Игнорируем не-GET запросы
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Игнорируем chrome extensions и другие схемы
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+
+  // Игнорируем запросы к Vite dev server
+  if (event.request.url.includes('127.0.0.1:5174') || event.request.url.includes('@vite')) {
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        // Проверяем валидность ответа
+        if (!response || response.status !== 200 || response.type === 'error') {
+          return response;
+        }
+
+        // Клонируем ответ для кеширования
+        const responseToCache = response.clone();
+
+        caches.open(CACHE_NAME)
+          .then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+
+        return response;
+      })
+      .catch(async () => {
+        // Если сеть недоступна, используем кеш
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        // Если запрос к HTML странице и нет в кеше - показываем офлайн страницу
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          const offlinePage = await caches.match('/offline.html');
+          if (offlinePage) {
+            return offlinePage;
+          }
+        }
+        
+        // Для остальных ресурсов - возвращаем главную страницу из кеша или генерируем ответ
+        const mainPage = await caches.match('/');
+        if (mainPage) {
+          return mainPage;
+        }
+        
+        // Если ничего нет в кеше, возвращаем базовый ответ
+        return new Response('Offline - no cache available', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({
+            'Content-Type': 'text/plain'
+          })
+        });
+      })
+  );
+});
+
+// Обработка push-уведомлений
+self.addEventListener('push', (event) => {
+  console.log('[Service Worker] Push event received', event);
+  
+  let notificationData = {
+    title: 'Объект+',
+    body: 'Новое уведомление',
+    icon: '/images/icons/icon-192x192.png',
+    badge: '/images/icons/icon-96x96.png',
+    url: '/'
+  };
+
+  // Парсим данные из push-уведомления
+  if (event.data) {
+    try {
+      const data = event.data.json();
+      console.log('[Service Worker] Push data:', data);
+      notificationData = {
+        title: data.title || notificationData.title,
+        body: data.body || data.message || notificationData.body,
+        icon: data.icon || notificationData.icon,
+        badge: data.badge || notificationData.badge,
+        url: data.url || data.link || notificationData.url,
+        data: data
+      };
+    } catch (e) {
+      console.log('[Service Worker] Push data as text:', event.data.text());
+      notificationData.body = event.data.text();
+    }
+  } else {
+    console.log('[Service Worker] No push data');
+  }
+
+  const options = {
+    body: notificationData.body,
+    icon: notificationData.icon,
+    badge: notificationData.badge,
+    vibrate: [200, 100, 200],
+    data: {
+      dateOfArrival: Date.now(),
+      url: notificationData.url,
+      ...notificationData.data
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'Открыть',
+        icon: '/images/icons/icon-96x96.png'
+      },
+      {
+        action: 'close',
+        title: 'Закрыть',
+        icon: '/images/icons/icon-96x96.png'
+      }
+    ],
+    tag: notificationData.data?.tag || 'default-notification',
+    requireInteraction: false,
+    renotify: true
+  };
+
+  console.log('[Service Worker] Showing notification:', notificationData.title, options);
+
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, options)
+      .then(() => {
+        console.log('[Service Worker] Notification shown successfully');
+      })
+      .catch((error) => {
+        console.error('[Service Worker] Error showing notification:', error);
+      })
+  );
+});
+
+// Обработка клика по уведомлению
+self.addEventListener('notificationclick', (event) => {
+  console.log('[Service Worker] Notification click:', event.action);
+  
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || '/';
+
+  if (event.action === 'open' || !event.action) {
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          // Проверяем, есть ли уже открытое окно
+          for (let client of clientList) {
+            if (client.url === urlToOpen && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          // Если окна нет, открываем новое
+          if (clients.openWindow) {
+            return clients.openWindow(urlToOpen);
+          }
+        })
+        .then(() => {
+          // Отмечаем уведомление как доставленное
+          const notificationId = event.notification.data?.notification_id;
+          if (notificationId) {
+            return fetch('/api/push/delivered', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include',
+              body: JSON.stringify({ notification_id: notificationId })
+            });
+          }
+        })
+    );
+  }
+});
+
+// Слушаем сообщения от страницы
+self.addEventListener('message', (event) => {
+  console.log('[Service Worker] Message received:', event.data);
+  
+  if (event.data.type === 'START_PERIODIC_CHECK') {
+    const interval = event.data.interval || 60000; // 1 минута по умолчанию
+    startPeriodicCheck(interval);
+  }
+});
+
+// Периодическая проверка через setTimeout в Service Worker
+let periodicCheckTimer = null;
+
+function startPeriodicCheck(interval) {
+  console.log(`[Service Worker] Starting periodic check every ${interval}ms`);
+  
+  // Очищаем предыдущий таймер
+  if (periodicCheckTimer) {
+    clearTimeout(periodicCheckTimer);
+  }
+  
+  // Функция периодической проверки
+  async function doPeriodicCheck() {
+    await checkForNotifications();
+    
+    // Планируем следующую проверку
+    periodicCheckTimer = setTimeout(doPeriodicCheck, interval);
+  }
+  
+  // Запускаем первую проверку
+  doPeriodicCheck();
+}
+
+// Синхронизация в фоне (на будущее)
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-data') {
+    event.waitUntil(syncData());
+  }
+});
+
+// Синхронизация в фоне - проверка новых уведомлений
+self.addEventListener('sync', (event) => {
+  console.log('[Service Worker] Background sync event:', event.tag);
+  
+  if (event.tag === 'check-notifications') {
+    event.waitUntil(checkForNotifications());
+  }
+});
+
+// Периодическая синхронизация (каждые 5 минут)
+self.addEventListener('periodicsync', (event) => {
+  console.log('[Service Worker] Periodic sync event:', event.tag);
+  
+  if (event.tag === 'check-notifications-periodic') {
+    event.waitUntil(checkForNotifications());
+  }
+});
+
+// Проверка новых уведомлений на сервере
+async function checkForNotifications() {
+  try {
+    console.log('[Service Worker] Checking for new notifications...');
+    
+    // Получаем последний ID из IndexedDB
+    const lastId = await getLastNotificationId();
+    
+    // ВАЖНО: Используем короткий timeout для фоновой проверки
+    const response = await fetch(`/api/push/poll?timeout=2&last_id=${lastId || ''}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json'
+      },
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      console.error('[Service Worker] Failed to fetch notifications:', response.status);
+      return;
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.notifications && data.notifications.length > 0) {
+      console.log('[Service Worker] ✅ Found', data.notifications.length, 'new notification(s)');
+      
+      // Показываем все новые уведомления
+      for (const notification of data.notifications) {
+        await showBackgroundNotification(notification);
+        await saveLastNotificationId(notification.id);
+        
+        // Отмечаем как доставленное
+        markAsDeliveredBackground(notification.id);
+      }
+    } else {
+      console.log('[Service Worker] No new notifications');
+    }
+  } catch (error) {
+    console.error('[Service Worker] Error checking notifications:', error);
+  }
+}
+
+// Отметить как доставленное из SW
+async function markAsDeliveredBackground(notificationId) {
+  try {
+    await fetch('/api/push/, 100, 200], // Более заметная вибрация
+    tag: data.id || 'notification-' + Date.now(),
+    requireInteraction: true, // Уведомление не закрывается автоматически
+    silent: false, // Со звуком
+    renotify: true, // Уведомлять даже если такой tag уже есть
+    data: {
+      url: data.url || '/',
+      notification_id: data.id,
+      timestamp: data.timestamp
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'Открыть'
+      },
+      {
+        action: 'close',
+        title: 'Закрыть'
+      }
+    ]
+  };
+  
+  console.log('[Service Worker] 🔔 Showing notification:', title);
+  
+  try {
+    await self.registration.showNotification(title, options);
+    console.log('[Service Worker] ✅ Notification shown successfully');
+  } catch (error) {
+    console.error('[Service Worker] ❌ Error showing notification:', error);
+  }
+    data: {
+      url: data.url || '/',
+      notification_id: data.id,
+      timestamp: data.timestamp
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'Открыть'
+      },
+      {
+        action: 'close',
+        title: 'Закрыть'
+      }
+    ]
+  };
+  
+  console.log('[Service Worker] Showing notification:', title);
+  
+  return self.registration.showNotification(title, options);
+}
+
+// Сохранить ID последнего уведомления в IndexedDB
+async function saveLastNotificationId(id) {
+  try {
+    const db = await openNotificationDB();
+    const tx = db.transaction('settings', 'readwrite');
+    const store = tx.objectStore('settings');
+    await store.put({ key: 'lastNotificationId', value: id });
+    await tx.complete;
+  } catch (error) {
+    console.error('[Service Worker] Error saving last notification ID:', error);
+  }
+}
+
+// Получить ID последнего уведомления из IndexedDB
+async function getLastNotificationId() {
+  try {
+    const db = await openNotificationDB();
+    const tx = db.transaction('settings', 'readonly');
+    const store = tx.objectStore('settings');
+    const result = await store.get('lastNotificationId');
+    return result?.value || null;
+  } catch (error) {
+    console.error('[Service Worker] Error getting last notification ID:', error);
+    return null;
+  }
+}
+
+// Открыть/создать IndexedDB
+function openNotificationDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('NotificationsDB', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'key' });
+      }
+    };
+  });
+}
+
+async function syncData() {
+  // Проверяем новые уведомления
+  await checkForNotifications();
+  console.log('[Service Worker] Background sync completed');
+}

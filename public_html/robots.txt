@@ -1,0 +1,43 @@
+# Robots.txt для системы управления строительными проектами
+# https://work
+
+# Разрешаем всем ботам
+User-agent: *
+Allow: /
+
+# Запрещаем индексацию служебных страниц
+Disallow: /admin/
+Disallow: /api/
+Disallow: /storage/
+Disallow: /vendor/
+Disallow: /*.json$
+Disallow: /*.xml$
+Disallow: /password/
+Disallow: /logout
+
+# Разрешаем важные страницы
+Allow: /
+Allow: /register
+Allow: /login
+Allow: /css/
+Allow: /js/
+Allow: /images/
+
+# Sitemap
+Sitemap: https://work/sitemap.xml
+
+# Специфичные настройки для Google
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Яндекс
+User-agent: Yandex
+Allow: /
+Crawl-delay: 0
+Host: work
+
+# Bing
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 0

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Объект+ - Офлайн режим</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+        }
+
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(0.95);
+            }
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .retry-button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .retry-button:active {
+            transform: translateY(0);
+        }
+
+        .features {
+            margin-top: 50px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .features h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .features-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            opacity: 0.8;
+        }
+
+        .feature-icon {
+            font-size: 1.3rem;
+        }
+
+        @media (max-width: 576px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+
+            .offline-icon {
+                font-size: 60px;
+            }
+
+            .features-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📡</div>
+        <h1>Нет подключения к интернету</h1>
+        <p>
+            Кажется, вы потеряли соединение с сетью. 
+            Проверьте подключение и попробуйте снова.
+        </p>
+        <button class="retry-button" onclick="location.reload()">
+            Попробовать снова
+        </button>
+
+        <div class="features">
+            <h2>Что доступно в офлайн режиме:</h2>
+            <div class="features-list">
+                <div class="feature-item">
+                    <span class="feature-icon">📋</span>
+                    <span>Просмотр проектов</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📄</span>
+                    <span>Документы</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📊</span>
+                    <span>Отчеты</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">💾</span>
+                    <span>Кешированные данные</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Проверяем соединение каждые 5 секунд
+        setInterval(() => {
+            if (navigator.onLine) {
+                location.reload();
+            }
+        }, 5000);
+
+        // Обработка события восстановления соединения
+        window.addEventListener('online', () => {
+            location.reload();
+        });
+    </script>
+</body>
+</html>

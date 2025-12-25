@@ -1,0 +1,1364 @@
+/* ========================================
+   МИНИМАЛИСТИЧНЫЙ ДИЗАЙН
+   ======================================== */
+
+/* Цветовая палитра - Черный, Белый, Красный */
+:root {
+    --primary: #a70000;
+    --primary-hover: #b91c1c;
+    --success: #a70000;
+    --warning: #a70000;
+    --danger: #a70000;
+    --text-primary: #a70000;
+    --text-secondary: #000000;
+    --text-muted: #6b7280;
+    --border: #000000;
+    --bg-light: #ffffff;
+    --bg-white: #ffffff;
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 0.15);
+    --radius: 8px;
+    --radius-sm: 6px;
+    --radius-lg: 12px;
+}
+
+/* Сброс и базовые стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #000000;
+    background: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Типографика */
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    color: #a70000;
+}
+
+h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 0.75rem;
+    color: #a70000;
+}
+
+h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #a70000;
+}
+
+h4, h5, h6 {
+    color: #a70000 !important;
+}
+
+p {
+    margin-bottom: 1rem;
+    color: #000000;
+}
+
+/* Контейнер */
+.minimal-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+@media (min-width: 1600px) {
+    .minimal-container {
+        max-width: 1600px;
+        padding: 2rem;
+    }
+}
+
+/* ========================================
+   НАВИГАЦИЯ
+   ======================================== */
+
+.minimal-nav {
+  background: #ffffff;
+    border-bottom: 1px solid #d4d4d4;
+    padding: 0.5rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.minimal-nav .minimal-container {
+    padding: 0 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.minimal-logo {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #a70000;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+}
+
+.minimal-logo:hover {
+    color: #b91c1c;
+}
+
+.minimal-logo i {
+    font-size: 1.25rem;
+}
+
+.minimal-user-menu {
+    position: relative;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #000000;
+    color: white;
+    border: 2px solid #000000;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.user-avatar:hover {
+    background: #a70000;
+    border-color: #a70000;
+}
+
+.user-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow);
+}
+
+.minimal-dropdown {
+    border: 1px solid var(--border);
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg);
+    margin-top: 0.5rem !important;
+    padding: 0.5rem 0;
+}
+
+.minimal-dropdown .dropdown-header {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.user-email {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.minimal-dropdown .dropdown-item {
+    padding: 0.625rem 1rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s;
+    border-radius: 0 !important;
+}
+
+.minimal-dropdown .dropdown-item:hover {
+    background: var(--bg-light);
+    color: var(--text-primary);
+}
+
+.minimal-dropdown .dropdown-item i {
+    font-size: 1.125rem;
+}
+
+.minimal-auth-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* ========================================
+   КНОПКИ
+   ======================================== */
+
+.minimal-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.5;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.minimal-btn-primary {
+    background: #000000;
+    color: white;
+    border: 2px solid #000000;
+}
+
+.minimal-btn-primary:hover {
+    background: #a70000;
+    color: white;
+    border-color: #a70000;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.minimal-btn-ghost {
+    background: transparent;
+    color: #000000;
+    border: 2px solid #000000;
+}
+
+.minimal-btn-ghost:hover {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+}
+
+.minimal-btn-large {
+    padding: 0.875rem 1.75rem;
+    font-size: 1rem;
+}
+
+.minimal-btn-icon {
+    padding: 0.5rem;
+    width: 36px;
+    height: 36px;
+}
+
+.minimal-btn-add {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem;
+    margin-top: 1rem;
+    border: 2px dashed var(--border);
+}
+
+.minimal-btn-add:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+/* ========================================
+   КАРТОЧКИ ПРОЕКТОВ
+   ======================================== */
+
+.minimal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.minimal-header h1 {
+    margin-bottom: 0;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+}
+
+@media (min-width: 1400px) {
+    .projects-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.project-card {
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.project-card:hover {
+    border-color: #a70000;
+    box-shadow: var(--shadow);
+    transform: none;
+}
+
+.project-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.project-card h3 {
+    flex: 1;
+    margin: 0;
+    color: #a70000;
+    font-size: 1.125rem;
+    font-weight: 700;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.project-status {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.project-role-badge {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.project-role-badge-small {
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+}
+
+.project-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.status-в-работе {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-на-паузе {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-завершен {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.project-address {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+}
+
+.project-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.progress-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.progress-value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 6px;
+    background: var(--bg-light);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #a70000;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.project-deadline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+/* ========================================
+   ПУСТЫЕ СОСТОЯНИЯ
+   ======================================== */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    min-height: 60vh;
+}
+
+.empty-icon {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--bg-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.empty-icon i {
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-state h3 {
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.empty-state-small {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+}
+
+.empty-state-small i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+/* ========================================
+   АЛЕРТЫ
+   ======================================== */
+
+.minimal-alert {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: #d1fae5;
+    color: #065f46;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.minimal-alert i {
+    font-size: 1.25rem;
+}
+
+/* ========================================
+   ФОРМЫ
+   ======================================== */
+
+.form-group-minimal {
+    margin-bottom: 1.5rem;
+}
+
+.form-group-minimal label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 0.9375rem;
+}
+
+.minimal-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: all 0.2s;
+    background: var(--bg-white);
+}
+
+.minimal-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.minimal-input::placeholder {
+    color: var(--text-muted);
+}
+
+.minimal-input.is-invalid {
+    border-color: var(--danger);
+}
+
+.error-message {
+    color: var(--danger);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* ========================================
+   ВИЗАРД
+   ======================================== */
+
+.wizard-container {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.wizard-progress {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-light);
+    color: var(--text-muted);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.125rem;
+    transition: all 0.3s;
+}
+
+.wizard-step.active .step-number {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: scale(1.1);
+}
+
+.step-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.wizard-step.active .step-label {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.wizard-line {
+    width: 80px;
+    height: 2px;
+    background: var(--border);
+    margin: 0 1rem;
+}
+
+.wizard-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.wizard-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wizard-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.wizard-header h2 {
+    margin-bottom: 0.5rem;
+}
+
+.wizard-header p {
+    color: var(--text-muted);
+    margin-bottom: 0;
+}
+
+.wizard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Карточки в визарде */
+.minimal-card {
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.minimal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: var(--bg-light);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+.minimal-card-body {
+    padding: 1.25rem;
+}
+
+/* ========================================
+   СТРАНИЦА ПРОЕКТА
+   ======================================== */
+
+.project-header-minimal {
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (min-width: 1200px) {
+    .project-header-minimal {
+        padding: 2.5rem;
+    }
+}
+
+.back-button {
+    margin-bottom: 1rem;
+}
+
+.project-title-section {
+    margin-bottom: 1.5rem;
+}
+
+.project-title-section h1 {
+    margin-bottom: 0.5rem;
+}
+
+.project-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 1rem;
+}
+
+.project-stats {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.5rem;
+    align-items: center;
+}
+
+@media (min-width: 1200px) {
+    .project-stats {
+        grid-template-columns: 2fr 1fr;
+        gap: 3rem;
+    }
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.project-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+/* ========================================
+   ТАБЫ
+   ======================================== */
+
+.minimal-tabs {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 2rem;
+    overflow-x: auto;
+}
+
+.tab-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9375rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.tab-button:hover {
+    color: var(--text-primary);
+    background: var(--bg-light);
+}
+
+.tab-button.active {
+    color: #a70000;
+    border-bottom-color: #a70000;
+    font-weight: 700;
+}
+
+.tab-badge {
+    padding: 0.125rem 0.5rem;
+    background: var(--bg-light);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.tab-button.active .tab-badge {
+    background: #dbeafe;
+    color: var(--primary);
+}
+
+.tab-content-minimal {
+    position: relative;
+}
+
+.tab-panel {
+    display: none;
+}
+
+.tab-panel.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* ========================================
+   ЭТАПЫ
+   ======================================== */
+
+.stages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.stage-item-minimal {
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: all 0.15s ease;
+}
+
+.stage-item-minimal:hover {
+    border-color: #a70000;
+    box-shadow: var(--shadow-sm);
+    transform: none;
+}
+
+.stage-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.stage-item-header h3 {
+    margin: 0;
+    color: #a70000;
+    font-weight: 700;
+}
+
+.stage-status-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.mini-badge {
+    padding: 0.25rem 0.625rem;
+    background: var(--bg-light);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.stage-status {
+    padding: 0.25rem 0.625rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.status-не-начат {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.status-в-работе {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-готово {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stage-dates, .stage-participants {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #a70000;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.stage-description {
+    color: #a70000;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+/* ========================================
+   УЧАСТНИКИ
+   ======================================== */
+
+.participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.participant-item-minimal {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: #ffffff;
+    border: 2px solid #000000;
+    border-radius: var(--radius);
+    transition: all 0.2s;
+}
+
+.participant-item-minimal:hover {
+    box-shadow: var(--shadow);
+}
+
+.participant-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #000000;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    border: 2px solid #000000;
+}
+
+.participant-info {
+    flex: 1;
+}
+
+.participant-name {
+    font-weight: 700;
+    color: #a70000;
+    margin-bottom: 0.25rem;
+}
+
+.participant-role {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.foreman-contact-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 2rem;
+    background: var(--bg-white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.foreman-avatar-large {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ========================================
+   АДАПТИВНОСТЬ
+   ======================================== */
+
+@media (max-width: 768px) {
+    .minimal-container {
+        padding: 1.5rem 1rem;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    .projects-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .project-card {
+        padding: 1rem;
+    }
+
+    .project-card h3 {
+        font-size: 1rem;
+    }
+
+    .minimal-btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .minimal-logo {
+        font-size: 1rem;
+    }
+
+    .minimal-logo i {
+        font-size: 1.125rem;
+    }
+
+    .minimal-nav {
+        padding: 0.375rem 0;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.85rem;
+    }
+
+    .wizard-progress {
+        margin-bottom: 1.5rem;
+    }
+
+    .wizard-line {
+        width: 30px;
+        margin: 0 0.5rem;
+    }
+
+    .step-label {
+        display: none;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .minimal-input {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.9375rem;
+    }
+
+    .form-group-minimal label {
+        font-size: 0.875rem;
+    }
+
+    .project-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .stat-label {
+        font-size: 0.8125rem;
+    }
+
+    .stat-value {
+        font-size: 1.25rem;
+    }
+
+    .wizard-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .wizard-actions .minimal-btn {
+        width: 100%;
+    }
+
+    .minimal-tabs {
+        margin-left: -0.875rem;
+        margin-right: -0.875rem;
+        padding: 0 0.875rem;
+    }
+
+    .tab-button {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .stage-item-minimal {
+        padding: 1rem;
+    }
+
+    .participant-item-minimal {
+        padding: 0.875rem 1rem;
+    }
+
+    .progress-label,
+    .progress-value {
+        font-size: 0.875rem;
+    }
+
+    .project-address,
+    .project-deadline,
+    .stage-dates,
+    .stage-participants {
+        font-size: 0.875rem;
+    }
+}
+
+/* ========================================
+   АДАПТИВНОСТЬ ДЛЯ БОЛЬШИХ ЭКРАНОВ
+   ======================================== */
+
+@media (min-width: 1200px) {
+    .minimal-container {
+        padding: 2rem;
+    }
+
+    .minimal-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .tab-content-minimal {
+        padding-top: 0.5rem;
+    }
+
+    .stages-list {
+        gap: 1.25rem;
+    }
+
+    .participants-list {
+        gap: 1rem;
+    }
+
+    .project-actions {
+        gap: 1rem;
+    }
+}
+
+@media (min-width: 1600px) {
+    body {
+        font-size: 17px;
+    }
+
+    h1 {
+        font-size: 2.25rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+    }
+
+    .project-card {
+        padding: 2rem;
+    }
+
+    .stage-item-minimal {
+        padding: 2rem;
+    }
+
+    .participant-item-minimal {
+        padding: 1.25rem 1.5rem;
+    }
+}
+
+/* ========================================
+   ПЛАВНЫЕ ПЕРЕХОДЫ
+   ======================================== */
+
+/* ========================================
+   СТИЛИ КАРТОЧЕК
+   ======================================== */
+
+.card {
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: none !important;
+}
+
+.stage-card {
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.stage-card:hover {
+    transform: translateY(-2px);
+    border-color: #9ca3af !important;
+}
+
+/* ========================================
+   КОМПАКТНЫЕ КАРТОЧКИ ЗАДАЧ ДЛЯ МОБИЛЬНЫХ
+   ======================================== */
+
+.task-card-compact {
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.task-card-compact:hover {
+    transform: translateY(-2px);
+    border-color: #9ca3af !important;
+}
+
+.task-card-compact .card-body {
+    padding: 0.5rem !important;
+}
+
+.task-card-compact h6 {
+    font-size: 0.85rem !important;
+    line-height: 1.2;
+}
+
+.task-card-compact .badge {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.35rem;
+}
+
+@media (min-width: 768px) {
+    .task-card-compact .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .task-card-compact h6 {
+        font-size: 0.95rem !important;
+    }
+}
+
+/* ========================================
+   СТИЛИ ДЛЯ FLATPICKR DATEPICKER
+   ======================================== */
+
+.flatpickr-calendar {
+    border: 2px solid #000000 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    font-family: inherit !important;
+}
+
+.flatpickr-months {
+    background: #ffffff !important;
+}
+
+.flatpickr-current-month {
+    color: #000000 !important;
+}
+
+.flatpickr-weekday {
+    color: #000000 !important;
+    font-weight: 500 !important;
+}
+
+.flatpickr-day {
+    color: #000000 !important;
+    border-radius: 4px !important;
+}
+
+.flatpickr-day.today {
+    border: 2px solid #a70000 !important;
+    font-weight: 600 !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #a70000 !important;
+    border-color: #a70000 !important;
+    color: #ffffff !important;
+}
+
+.flatpickr-day.inRange {
+    background: #fee2e2 !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+.flatpickr-day:hover {
+    background: #f3f4f6 !important;
+}
+
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+    background: #b91c1c !important;
+}
+
+.date-range-picker {
+    cursor: pointer !important;
+    background-color: #ffffff !important;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .minimal-btn,
+    .project-card,
+    .stage-item-minimal,
+    .participant-item-minimal,
+    .tab-button {
+        transition: all 0.15s ease;
+    }
+
+    .progress-bar-fill {
+        transition: width 0.3s ease;
+    }
+}

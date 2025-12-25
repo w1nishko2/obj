@@ -1,0 +1,160 @@
+<!-- Модальное окно для запроса разрешений -->
+<div id="permissionsModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-bell me-2"></i>Включить уведомления
+                </h5>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-3">
+                    Получайте уведомления о новых задачах, комментариях и обновлениях проектов.
+                </p>
+
+                <div class="alert alert-info mb-0">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Уведомления приходят даже когда браузер закрыт.
+                </div>
+
+                <div id="permissionStatus" class="mt-3"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="skipPermissionsBtn" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Позже
+                </button>
+                <button type="button" id="allowPermissionsBtn" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-1"></i> Включить
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #permissionsModal .modal-content {
+        border-radius: 8px;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('permissionsModal');
+    const allowBtn = document.getElementById('allowPermissionsBtn');
+    const skipBtn = document.getElementById('skipPermissionsBtn');
+
+    // Проверяем, показывали ли уже это окно
+    const permissionsAsked = localStorage.getItem('permissionsAsked');
+    
+    // Проверяем текущий статус разрешений
+    const hasPermission = 'Notification' in window && Notification.permission === 'granted';
+    const isBlocked = 'Notification' in window && Notification.permission === 'denied';
+
+    // Показываем модалку только если:
+    // 1. Ещё не показывали И
+    // 2. Разрешения нет
+    if (!permissionsAsked && !hasPermission) {
+        setTimeout(() => {
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+            
+            // Показываем статус если уведомления заблокированы
+            if (isBlocked) {
+                document.getElementById('permissionStatus').innerHTML = `
+                    <div class="alert alert-warning">
+                        <strong>⚠️ Уведомления заблокированы</strong><br>
+                        <small>Разблокируйте в адресной строке браузера (иконка замка/колокольчика)</small>
+                    </div>
+                `;
+            }
+        }, 2000);
+    }
+
+    // Обработчик кнопки "Включить"
+    allowBtn.addEventListener('click', async function() {
+        const originalText = allowBtn.innerHTML;
+        allowBtn.disabled = true;
+        allowBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Подключение...';
+
+        try {
+            // Проверяем поддержку
+            if (!('Notification' in window)) {
+                throw new Error('Ваш браузер не поддерживает уведомления');
+            }
+
+            if (!('serviceWorker' in navigator)) {
+                throw new Error('Ваш браузер не поддерживает Service Worker');
+            }
+
+            // Проверяем текущий статус
+            console.log('Current permission:', Notification.permission);
+
+            // Если уже заблокировано - показываем инструкцию
+            if (Notification.permission === 'denied') {
+                throw new Error('Уведомления заблокированы.\n\nРазблокируйте их:\n1. Кликните на иконку замка слева от адреса сайта\n2. Найдите "Уведомления"\n3. Выберите "Разрешить"\n4. Обновите страницу (F5)');
+            }
+
+            // Запрашиваем разрешение у браузера
+            const permission = await Notification.requestPermission();
+            console.log('New permission:', permission);
+
+            if (permission === 'granted') {
+                // Инициализируем Web Push Manager
+                if (typeof WebPushManager !== 'undefined') {
+                    const pushManager = new WebPushManager();
+                    const initialized = await pushManager.init();
+                    
+                    if (initialized) {
+                        await pushManager.subscribe();
+                        allowBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Готово!';
+                        allowBtn.classList.remove('btn-primary');
+                        allowBtn.classList.add('btn-success');
+                        
+                        localStorage.setItem('permissionsAsked', 'true');
+                        
+                        setTimeout(() => {
+                            const bootstrapModal = bootstrap.Modal.getInstance(modal);
+                            bootstrapModal.hide();
+                        }, 1000);
+                    } else {
+                        throw new Error('Не удалось инициализировать Web Push. Проверьте, не блокирует ли антивирус Service Worker.');
+                    }
+                } else {
+                    throw new Error('WebPushManager не найден');
+                }
+            } else if (permission === 'denied') {
+                throw new Error('Разрешение отклонено. Сбросьте разрешения сайта в браузере.');
+            } else {
+                throw new Error('Разрешение не получено. Попробуйте снова.');
+            }
+
+        } catch (error) {
+            console.error('Error requesting permissions:', error);
+            
+            // Показываем ошибку
+            const statusDiv = document.getElementById('permissionStatus');
+            statusDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <strong>❌ Ошибка</strong><br>
+                    <small style="white-space: pre-line;">${error.message}</small>
+                </div>
+            `;
+            
+            // Восстанавливаем кнопку
+            allowBtn.innerHTML = originalText;
+            allowBtn.disabled = false;
+            
+            // Помечаем что пытались
+            localStorage.setItem('permissionsAsked', 'true');
+        }
+    });
+
+    // Обработчик кнопки "Позже"
+    skipBtn.addEventListener('click', function() {
+        localStorage.setItem('permissionsAsked', 'true');
+    });
+});
+</script>
+<?php /**PATH C:\OSPanel\domains\work\resources\views\components\permissions-modal.blade.php ENDPATH**/ ?>
