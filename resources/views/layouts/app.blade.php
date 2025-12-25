@@ -383,11 +383,11 @@
         <div class="modal fade" id="tutorialModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
             <div class="modal-dialog modal-fullscreen m-0">
                 <div class="modal-content">
-                    <div class="d-flex flex-column h-100" style="overflow-y: auto;">
-                        <div class="modal-header border-0 pb-2">
-                            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1 py-4">
+                    <div class="modal-header border-0 pb-2 position-sticky top-0 bg-white" style="z-index: 1000;">
+                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-0 overflow-auto" style="padding-bottom: 100px;">
+                        <div class="d-flex justify-content-center py-4">
                             <div class="wizard-container text-center" style="max-width: 600px; width: 100%; padding: 1rem;">
                                 <div class="mb-4">
                                     <i class="bi bi-lightbulb" style="font-size: 4rem; color: #007bff;"></i>
@@ -452,12 +452,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="modal-footer border-0 justify-content-center">
-                            <button type="button" class="minimal-btn minimal-btn-primary" data-bs-dismiss="modal">
-                                <i class="bi bi-check2-circle"></i>
-                                Спасибо
-                            </button>
                         </div>
                     </div>
                 </div>
