@@ -157,21 +157,27 @@ class WebPushService
     {
         $defaults = config('webpush.notification_defaults', []);
 
-        return array_merge($defaults, [
+        // Основные данные уведомления
+        $notification = [
             'title' => $payload['title'] ?? 'Уведомление',
             'body' => $payload['body'] ?? '',
             'icon' => $payload['icon'] ?? $defaults['icon'] ?? null,
             'badge' => $payload['badge'] ?? $defaults['badge'] ?? null,
             'image' => $payload['image'] ?? null,
-            'vibrate' => $payload['vibrate'] ?? $defaults['vibrate'] ?? [200, 100, 200],
-            'data' => $payload['data'] ?? [],
-            'actions' => $payload['actions'] ?? [],
             'tag' => $payload['tag'] ?? $defaults['tag'] ?? 'notification',
             'requireInteraction' => $payload['requireInteraction'] ?? $defaults['requireInteraction'] ?? false,
             'renotify' => $payload['renotify'] ?? $defaults['renotify'] ?? false,
-            'silent' => $payload['silent'] ?? $defaults['silent'] ?? false,
+            'silent' => false, // Звук всегда включён
             'timestamp' => $payload['timestamp'] ?? time() * 1000,
-        ]);
+            'vibrate' => $payload['vibrate'] ?? $defaults['vibrate'] ?? [200, 100, 200],
+            'data' => $payload['data'] ?? [],
+            'actions' => $payload['actions'] ?? []
+        ];
+
+        // Удаляем null значения
+        return array_filter($notification, function($value) {
+            return $value !== null;
+        });
     }
 
     /**

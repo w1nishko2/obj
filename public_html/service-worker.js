@@ -127,29 +127,31 @@ self.addEventListener('push', (event) => {
       const payload = event.data.json();
       console.log('[Service Worker] Push payload:', payload);
 
-      notificationData = {
-        title: payload.title || notificationData.title,
-        body: payload.body || notificationData.body,
-        icon: payload.icon || notificationData.icon,
-        badge: payload.badge || notificationData.badge,
-        image: payload.image,
-        vibrate: payload.vibrate || notificationData.vibrate,
-        tag: payload.tag || notificationData.tag,
-        requireInteraction: payload.requireInteraction || false,
-        renotify: payload.renotify || false,
-        silent: false,  // Звук всегда включён
-        timestamp: payload.timestamp || Date.now(),
-        data: payload.data || notificationData.data,
-        actions: payload.actions || []
-      };
+      // Обновляем данные уведомления из payload
+      notificationData.title = payload.title || notificationData.title;
+      notificationData.body = payload.body || notificationData.body;
+      notificationData.icon = payload.icon || notificationData.icon;
+      notificationData.badge = payload.badge || notificationData.badge;
+      notificationData.image = payload.image || notificationData.image;
+      notificationData.vibrate = payload.vibrate || notificationData.vibrate;
+      notificationData.tag = payload.tag || notificationData.tag;
+      notificationData.requireInteraction = payload.requireInteraction || false;
+      notificationData.renotify = payload.renotify || false;
+      notificationData.timestamp = payload.timestamp || Date.now();
+      notificationData.data = payload.data || notificationData.data;
+      notificationData.actions = payload.actions || [];
     } catch (error) {
       console.error('[Service Worker] Failed to parse push data:', error);
       notificationData.body = event.data.text();
     }
   }
 
+  // Извлекаем title отдельно
+  const title = notificationData.title;
+  delete notificationData.title; // Удаляем title из опций
+
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    self.registration.showNotification(title, notificationData)
       .then(() => {
         console.log('[Service Worker] Notification shown successfully with sound');
         
