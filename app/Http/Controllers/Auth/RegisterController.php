@@ -64,12 +64,33 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        $user = User::create([
             'name' => $data['name'],
             'phone' => $data['phone'],
             'email' => isset($data['email']) && !empty($data['email']) ? $data['email'] : null,
             'password' => Hash::make($data['password']),
             'role' => 'Клиент', // По умолчанию новые пользователи - клиенты
         ]);
+
+        // Автоматически активируем бесплатный тариф на 14 дней
+        $freePlan = \App\Models\Plan::where('slug', 'free')->first();
+        if ($freePlan) {
+            // Создаем подписку
+            $subscription = \App\Models\Subscription::create([
+                'user_id' => $user->id,
+                'plan_id' => $freePlan->id,
+                'status' => 'active',
+                'started_at' => now(),
+                'expires_at' => now()->addDays(14),
+            ]);
+            
+            // Обновляем данные пользователя
+            $user->subscription_type = 'free';
+            $user->subscription_expires_at = now()->addDays(14);
+            $user->account_type = 'foreman'; // ВАЖНО: Даем права прораба
+            $user->save();
+        }
+
+        return $user;
     }
 }

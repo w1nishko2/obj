@@ -9,7 +9,7 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #a70000 0%, #8b0000 100%);
     position: relative;
     overflow: hidden;
 }
@@ -49,7 +49,7 @@
 
 .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(90deg, #a70000 0%, #8b0000 100%);
     width: 0%;
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -98,9 +98,9 @@
 }
 
 .step-indicator.active .step-dot {
-    border-color: #667eea;
-    background: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+    border-color: #a70000;
+    background: #a70000;
+    box-shadow: 0 0 0 4px rgba(167, 0, 0, 0.2);
 }
 
 .step-indicator.completed .step-dot {
@@ -134,7 +134,7 @@
     width: 120px;
     height: 120px;
     margin: 0 auto 2rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #a70000 0%, #8b0000 100%);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -182,7 +182,7 @@
 
 .benefit-card i {
     font-size: 3rem;
-    color: #667eea;
+    color: #a70000;
     margin-bottom: 1rem;
 }
 
@@ -294,7 +294,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #a70000 0%, #8b0000 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -302,13 +302,13 @@
 .role-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-    border-color: #667eea;
+    border-color: #a70000;
 }
 
 .role-card.selected {
-    border-color: #667eea;
+    border-color: #a70000;
     background: white;
-    box-shadow: 0 15px 40px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 15px 40px rgba(167, 0, 0, 0.3);
 }
 
 .role-card.selected::before {
@@ -317,7 +317,7 @@
 
 .role-icon {
     font-size: 4rem;
-    color: #667eea;
+    color: #a70000;
     margin-bottom: 1.5rem;
     transition: all 0.3s ease;
 }
@@ -379,7 +379,7 @@
 }
 
 .form-group-wizard label i {
-    color: #667eea;
+    color: #a70000;
 }
 
 .wizard-input {
@@ -394,8 +394,8 @@
 
 .wizard-input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    border-color: #a70000;
+    box-shadow: 0 0 0 4px rgba(167, 0, 0, 0.1);
 }
 
 .wizard-input::placeholder {
@@ -435,7 +435,7 @@
 }
 
 .password-toggle:hover {
-    color: #667eea;
+    color: #a70000;
 }
 
 /* Чекбокс */
@@ -451,7 +451,7 @@
     height: 20px;
     margin-top: 0.25rem;
     cursor: pointer;
-    accent-color: #667eea;
+    accent-color: #a70000;
 }
 
 .form-check-wizard label {
@@ -462,13 +462,13 @@
 }
 
 .form-check-wizard label a {
-    color: #667eea;
+    color: #a70000;
     text-decoration: underline;
     font-weight: 500;
 }
 
 .form-check-wizard label a:hover {
-    color: #764ba2;
+    color: #8b0000;
 }
 
 /* Кнопки */
@@ -487,14 +487,14 @@
 }
 
 .wizard-btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #a70000 0%, #8b0000 100%);
     color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 4px 15px rgba(167, 0, 0, 0.4);
 }
 
 .wizard-btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+    box-shadow: 0 6px 25px rgba(167, 0, 0, 0.5);
 }
 
 .wizard-btn-success {
@@ -521,8 +521,8 @@
 }
 
 .wizard-btn-ghost:hover {
-    border-color: #667eea;
-    color: #667eea;
+    border-color: #a70000;
+    color: #a70000;
 }
 
 .wizard-btn:disabled {
@@ -566,7 +566,7 @@
 
 .login-link a:hover {
     background: white;
-    color: #667eea;
+    color: #a70000;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }

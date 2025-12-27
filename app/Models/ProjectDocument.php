@@ -56,4 +56,20 @@ class ProjectDocument extends Model
             default => 'bi-file-earmark',
         };
     }
+
+    /**
+     * Получить безопасный URL файла с защитой от path traversal
+     */
+    public function getSecureUrlAttribute(): string
+    {
+        // Убираем потенциально опасные последовательности
+        $safePath = str_replace(['../', '..\\', '..'], '', $this->file_path);
+        
+        // Убеждаемся что путь начинается с разрешенной директории
+        if (!str_starts_with($safePath, 'project_documents/')) {
+            $safePath = 'project_documents/' . basename($safePath);
+        }
+        
+        return \Illuminate\Support\Facades\Storage::url($safePath);
+    }
 }

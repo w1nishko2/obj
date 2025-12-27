@@ -242,7 +242,7 @@
                     <p><strong>18.3.</strong> Контактная информация Роскомнадзора:</p>
                     <ul>
                         <li>Телефон: +7 (495) 987-68-00</li>
-                        <li>Официальный сайт: <a href="http://www.rsoc.ru" target="_blank">www.rsoc.ru</a></li>
+                        <li>Официальный сайт: <a href="http://www.rsoc.ru" target="_blank" rel="noopener noreferrer">www.rsoc.ru</a></li>
                     </ul>
 
                     <h4>19. Контактные данные Оператора</h4>

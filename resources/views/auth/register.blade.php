@@ -136,9 +136,9 @@
                                required>
                         <label class="form-check-label" for="terms" style="font-size: 0.9rem; line-height: 1.5;">
                             Я согласен(на) с 
-                            <a href="{{ route('terms-of-service') }}" target="_blank" style="color: #a70000; text-decoration: underline;">Пользовательским соглашением</a> 
+                            <a href="{{ route('terms-of-service') }}" target="_blank" rel="noopener noreferrer" style="color: #a70000; text-decoration: underline;">Пользовательским соглашением</a> 
                             и 
-                            <a href="{{ route('privacy-policy') }}" target="_blank" style="color: #a70000; text-decoration: underline;">Политикой конфиденциальности</a>, 
+                            <a href="{{ route('privacy-policy') }}" target="_blank" rel="noopener noreferrer" style="color: #a70000; text-decoration: underline;">Политикой конфиденциальности</a>, 
                             а также даю согласие на обработку моих персональных данных
                         </label>
                         @error('terms')

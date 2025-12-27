@@ -310,26 +310,20 @@ class ProjectNotificationService
             return;
         }
 
-        $statusNames = [
-            'pending' => 'Ожидает',
-            'in_progress' => 'В работе',
-            'completed' => 'Завершена'
-        ];
-
         $statusIcons = [
-            'pending' => '⏳',
-            'in_progress' => '🔧',
-            'completed' => '✅'
+            'Не начата' => '⏳',
+            'В работе' => '🔧',
+            'На проверке' => '🔍',
+            'Завершена' => '✅'
         ];
 
-        $statusName = $statusNames[$newStatus] ?? $newStatus;
         $icon = $statusIcons[$newStatus] ?? '📋';
 
         $this->webPushService->sendToUsers(
             userIds: $participantIds,
             payload: [
-                'title' => "{$icon} Задача: {$statusName}",
-                'body' => "«{$task->name}» изменила статус",
+                'title' => "{$icon} Изменён статус задачи",
+                'body' => "«{$task->name}» → {$newStatus}",
                 'icon' => '/images/icons/icon.svg',
                 'badge' => '/images/icons/badge.png',
                 'tag' => 'task-status-' . $task->id,
@@ -340,6 +334,56 @@ class ProjectNotificationService
                     'task_id' => $task->id,
                     'type' => 'task_status_changed',
                     'status' => $newStatus
+                ],
+                'actions' => [
+                    [
+                        'action' => 'view',
+                        'title' => '👁️ Посмотреть'
+                    ]
+                ]
+            ]
+        );
+    }
+
+    /**
+     * Уведомить участников об изменении статуса этапа
+     */
+    public function notifyStageStatusChanged(Project $project, $stage, string $newStatus, User $changedBy): void
+    {
+        $participantIds = $this->getProjectParticipantIds($project, $changedBy->id);
+
+        if (empty($participantIds)) {
+            return;
+        }
+
+        $statusIcons = [
+            'Не начат' => '⏳',
+            'В работе' => '🔧',
+            'Готово' => '✅'
+        ];
+
+        $icon = $statusIcons[$newStatus] ?? '🏗️';
+
+        $this->webPushService->sendToUsers(
+            userIds: $participantIds,
+            payload: [
+                'title' => "{$icon} Изменён статус этапа",
+                'body' => "«{$stage->name}» → {$newStatus}",
+                'icon' => '/images/icons/icon.svg',
+                'badge' => '/images/icons/badge.png',
+                'tag' => 'stage-status-' . $stage->id,
+                'data' => [
+                    'url' => route('stages.show', [$project->id, $stage->id]),
+                    'project_id' => $project->id,
+                    'stage_id' => $stage->id,
+                    'type' => 'stage_status_changed',
+                    'status' => $newStatus
+                ],
+                'actions' => [
+                    [
+                        'action' => 'view',
+                        'title' => '👁️ Посмотреть'
+                    ]
                 ]
             ]
         );

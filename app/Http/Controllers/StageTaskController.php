@@ -13,6 +13,7 @@ use App\Services\ProjectNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class StageTaskController extends Controller
 {
@@ -29,7 +30,13 @@ class StageTaskController extends Controller
     {
         $this->authorize('view', $project);
 
+        // Загружаем только первые 20 задач для начального отображения
         $stage->load([
+            'tasks' => function($query) {
+                $query->withCount(['photos', 'comments'])
+                      ->orderBy('order')
+                      ->limit(20);
+            },
             'tasks.creator', 
             'tasks.assignedUser', 
             'tasks.comments.user', 
@@ -37,8 +44,14 @@ class StageTaskController extends Controller
             'materials.user',
             'deliveries.user'
         ]);
+        
+        // Получаем общее количество задач для условного отображения поиска
+        $totalTasks = \App\Models\StageTask::where('stage_id', $stage->id)->count();
+        
+        // Кешируем роль текущего пользователя для предотвращения N+1 запросов
+        $currentUserRole = Auth::user()->getRoleInProject($project);
 
-        return view('stages.show', compact('project', 'stage'));
+        return view('stages.show', compact('project', 'stage', 'currentUserRole', 'totalTasks'));
     }
 
     // Создать задачу (только Прораб)
@@ -68,7 +81,7 @@ class StageTaskController extends Controller
         try {
             $this->notificationService->notifyTaskCreated($project, $stage, $task, Auth::user());
         } catch (\Exception $e) {
-            \Log::error('Failed to send push notification for task created: ' . $e->getMessage());
+            Log::error('Failed to send push notification for task created: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Задача создана!')
@@ -92,12 +105,24 @@ class StageTaskController extends Controller
             'markup_percent' => 'nullable|numeric|min:0|max:999.99',
         ]);
 
+        // Сохраняем старый статус для проверки изменения
+        $oldStatus = $task->status;
+
         $task->update([
             'status' => $validated['status'],
             'cost' => $validated['cost'] ?? 0,
             'assigned_to' => $validated['assigned_to'] ?? null,
             'markup_percent' => $validated['markup_percent'] ?? null,
         ]);
+
+        // Отправляем push-уведомление если статус изменился
+        if ($oldStatus !== $validated['status']) {
+            try {
+                $this->notificationService->notifyTaskStatusChanged($project, $stage, $task, $validated['status'], Auth::user());
+            } catch (\Exception $e) {
+                Log::error('Failed to send push notification for task status changed: ' . $e->getMessage());
+            }
+        }
 
         // Если AJAX запрос - возвращаем JSON
         if ($request->wantsJson() || $request->ajax()) {
@@ -155,6 +180,13 @@ class StageTaskController extends Controller
 
         $task->update(['status' => $validated['status']]);
 
+        // Отправляем push-уведомление участникам проекта
+        try {
+            $this->notificationService->notifyTaskStatusChanged($project, $stage, $task, $validated['status'], Auth::user());
+        } catch (\Exception $e) {
+            Log::error('Failed to send push notification for task status changed: ' . $e->getMessage());
+        }
+
         return back()->with('success', 'Статус задачи обновлен!')
             ->with('tab', 'tasksTab')
             ->with('task_id', $task->id)
@@ -179,7 +211,7 @@ class StageTaskController extends Controller
         try {
             $this->notificationService->notifyCommentAdded($project, $stage, $task, $comment, Auth::user());
         } catch (\Exception $e) {
-            \Log::error('Failed to send push notification for comment added: ' . $e->getMessage());
+            Log::error('Failed to send push notification for comment added: ' . $e->getMessage());
         }
 
         // Если AJAX запрос - возвращаем JSON
@@ -243,7 +275,7 @@ class StageTaskController extends Controller
             try {
                 $this->notificationService->notifyPhotoAdded($project, $stage, $task, $lastPhoto, Auth::user());
             } catch (\Exception $e) {
-                \Log::error('Failed to send push notification for photo added: ' . $e->getMessage());
+                Log::error('Failed to send push notification for photo added: ' . $e->getMessage());
             }
         }
 
@@ -347,7 +379,7 @@ class StageTaskController extends Controller
         try {
             $this->notificationService->notifyMaterialAdded($project, $stage, $material, Auth::user());
         } catch (\Exception $e) {
-            \Log::error('Failed to send push notification for material added: ' . $e->getMessage());
+            Log::error('Failed to send push notification for material added: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Материал добавлен!')
@@ -396,7 +428,7 @@ class StageTaskController extends Controller
         try {
             $this->notificationService->notifyDeliveryAdded($project, $stage, $delivery, Auth::user());
         } catch (\Exception $e) {
-            \Log::error('Failed to send push notification for delivery added: ' . $e->getMessage());
+            Log::error('Failed to send push notification for delivery added: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Доставка добавлена!')
@@ -415,5 +447,39 @@ class StageTaskController extends Controller
 
         return back()->with('success', 'Доставка удалена!')
             ->with('tab', 'deliveriesTab');
+    }
+
+    /**
+     * Поиск и пагинация задач этапа (Ajax)
+     */
+    public function searchTasks(Request $request, Project $project, ProjectStage $stage)
+    {
+        $this->authorize('view', $project);
+
+        $query = StageTask::where('stage_id', $stage->id)
+            ->withCount(['photos', 'comments'])
+            ->with(['creator', 'assignedUser']);
+
+        // Нечеткий поиск (fuzzy search) с ~70% совпадением
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                // Точное совпадение по имени и описанию
+                $q->where('name', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhere('description', 'LIKE', '%' . $searchTerm . '%')
+                  // Неточное совпадение (похожие слова)
+                  ->orWhereRaw('SOUNDEX(name) = SOUNDEX(?)', [$searchTerm])
+                  // Поиск по частям слова
+                  ->orWhere('name', 'LIKE', '%' . str_replace(' ', '%', $searchTerm) . '%');
+            });
+        }
+
+        $tasks = $query->orderBy('order')->paginate(20);
+
+        return response()->json([
+            'tasks' => $tasks->items(),
+            'has_more' => $tasks->hasMorePages(),
+            'next_page' => $tasks->currentPage() + 1,
+        ]);
     }
 }

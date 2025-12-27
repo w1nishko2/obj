@@ -111,6 +111,12 @@ class Subscription extends Model
             // Сброс подписки пользователя - убираем подписку полностью
             $this->user->subscription_type = null;
             $this->user->subscription_expires_at = null;
+            
+            // ВАЖНО: Снимаем статус прораба, возвращаем в клиенты
+            if ($this->user->account_type === 'foreman') {
+                $this->user->account_type = 'client';
+            }
+            
             $this->user->save();
         }
     }

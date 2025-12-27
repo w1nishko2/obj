@@ -14,7 +14,7 @@
                     </div>
 
                     <h5 class="mt-4">Шаг 1: Откройте личный кабинет ЮKassa</h5>
-                    <p>Перейдите по ссылке: <a href="https://yookassa.ru/my" target="_blank">https://yookassa.ru/my</a></p>
+                    <p>Перейдите по ссылке: <a href="https://yookassa.ru/my" target="_blank" rel="noopener noreferrer">https://yookassa.ru/my</a></p>
 
                     <h5 class="mt-4">Шаг 2: Настройте HTTP-уведомления</h5>
                     <ol>

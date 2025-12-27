@@ -51,6 +51,11 @@ class PaymentController extends Controller
                 ->with('error', 'У вас уже есть активная подписка на этот тариф.');
         }
 
+        // ВАЖНО: Бесплатный тариф активируется напрямую без оплаты
+        if ($plan->slug === 'free' || $plan->price == 0) {
+            return $this->activateFreePlan($user, $plan);
+        }
+
         try {
             // Генерируем уникальный идентификатор платежа
             $idempotenceKey = Str::uuid()->toString();
@@ -237,6 +242,49 @@ class PaymentController extends Controller
                 'error' => $e->getMessage(),
             ]);
             throw $e;
+        }
+    }
+
+    /**
+     * Активация бесплатного тарифа (без оплаты)
+     */
+    protected function activateFreePlan($user, $plan)
+    {
+        try {
+            // Создаем подписку напрямую
+            $subscription = Subscription::create([
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'status' => 'active',
+                'started_at' => now(),
+                'expires_at' => null, // Будет установлено в activate()
+            ]);
+
+            // Активируем подписку
+            $subscription->activate();
+
+            // ВАЖНО: Даем права прораба и для бесплатного тарифа
+            if (!$user->isForeman()) {
+                $user->upgradeToForeman();
+            }
+
+            Log::info('Free plan activated', [
+                'user_id' => $user->id,
+                'plan_id' => $plan->id,
+                'subscription_id' => $subscription->id,
+            ]);
+
+            return redirect()->route('home')
+                ->with('success', 'Бесплатный тариф активирован на 14 дней! Начните создавать проекты.');
+
+        } catch (\Exception $e) {
+            Log::error('Error activating free plan: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->route('pricing.index')
+                ->with('error', 'Произошла ошибка при активации тарифа. Попробуйте позже.');
         }
     }
 

@@ -40,7 +40,7 @@
                 <div class="project-card archived-project">
                     <div class="archived-badge">
                         <i class="bi bi-archive"></i>
-                        Архив
+                        
                     </div>
                     
                     <a href="{{ route('projects.show', $project) }}" style="text-decoration: none; color: inherit;">

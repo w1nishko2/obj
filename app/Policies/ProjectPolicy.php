@@ -87,8 +87,13 @@ class ProjectPolicy
             return false;
         }
 
-        // Проверяем тариф - генерация доступна только на платных тарифах
-        return $user->hasPaidPlan();
+        // Проверяем активную подписку (не просто наличие тарифа)
+        if (!$user->hasActiveSubscription()) {
+            return false;
+        }
+
+        // Проверяем права на генерацию документов
+        return $user->canGenerateDocuments($project) || $user->canGenerateEstimates();
     }
 
     /**

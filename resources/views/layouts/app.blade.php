@@ -86,6 +86,14 @@
                                 Профиль
                             </a>
                         </li>
+                        @if(Auth::user()->isForeman())
+                        <li>
+                            <a class="dropdown-item" href="{{ route('prices.index') }}">
+                                <i class="bi bi-currency-dollar"></i>
+                                Прайсы
+                            </a>
+                        </li>
+                        @endif
                         <li>
                             <a class="dropdown-item" href="{{ route('pricing.index') }}">
                                 <i class="bi bi-star"></i>
@@ -390,7 +398,7 @@
                         <div class="d-flex justify-content-center py-4">
                             <div class="wizard-container text-center" style="max-width: 600px; width: 100%; padding: 1rem;">
                                 <div class="mb-4">
-                                    <i class="bi bi-lightbulb" style="font-size: 4rem; color: #007bff;"></i>
+                                    <i class="bi bi-lightbulb" style="font-size: 4rem; color: #a70000;"></i>
                                 </div>
                                 <h2 class="mb-3">Быстрая подсказка</h2>
                                 <p class="text-muted mb-4">Узнайте основные возможности работы с проектом</p>
@@ -398,7 +406,7 @@
                                 <!-- Первая подсказка -->
                                 <div class="tutorial-item mb-4 text-start">
                                     <div class="d-flex align-items-start mb-3">
-                                        <div class="tutorial-number me-3" style="background: #007bff; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
+                                        <div class="tutorial-number me-3" style="background: #a70000; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
                                             1
                                         </div>
                                         <div>
@@ -418,7 +426,7 @@
                                 <!-- Видео инструкция -->
                                 <div class="tutorial-item mb-4 text-start">
                                     <div class="d-flex align-items-start mb-3">
-                                        <div class="tutorial-number me-3" style="background: #007bff; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
+                                        <div class="tutorial-number me-3" style="background: #a70000; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
                                             2
                                         </div>
                                         <div>

@@ -19,11 +19,13 @@ class StageTask extends Model
         'order',
         'cost',
         'markup_percent',
+        'price',
     ];
 
     protected $casts = [
         'cost' => 'decimal:2',
         'markup_percent' => 'decimal:2',
+        'price' => 'decimal:2',
     ];
 
     /**
@@ -31,7 +33,8 @@ class StageTask extends Model
      */
     public function getFinalCostAttribute()
     {
-        $baseCost = $this->cost ?? 0;
+        // Приоритет: price из шаблона, затем cost (для обратной совместимости)
+        $baseCost = $this->price ?? $this->cost ?? 0;
         
         // Приоритет: наценка задачи, затем наценка проекта
         $markup = $this->markup_percent ?? $this->stage->project->markup_percent ?? 0;

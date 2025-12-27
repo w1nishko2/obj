@@ -22,8 +22,18 @@
             <div class="subscription-warning-content">
                 <i class="bi bi-info-circle"></i>
                 <div>
-                    <strong>Стартовый тариф "Прораб Старт"</strong>
-                    <p>Доступно проектов: {{ Auth::user()->getRemainingProjectsCount() }} из 2. 
+                    <strong>Текущий тариф: @if(Auth::user()->subscription_type === 'free') Бесплатный @elseif(str_contains(Auth::user()->subscription_type, 'starter')) Стартовый @elseif(str_contains(Auth::user()->subscription_type, 'professional')) Профессиональный @elseif(str_contains(Auth::user()->subscription_type, 'corporate')) Корпоративный @else Не активен @endif</strong>
+                    @php
+                        $remaining = Auth::user()->getRemainingProjectsCount();
+                        $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
+                        $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+                    @endphp
+                    <p>Доступно проектов: 
+                        @if($remaining === null)
+                            безлимит
+                        @else
+                            {{ $remaining }} из {{ $maxProjects }}
+                        @endif 
                     <a href="{{ route('pricing.index') }}">Оформите подписку</a> для снятия ограничений.</p>
                 </div>
             </div>
@@ -36,7 +46,7 @@
             @if(Auth::user()->isForeman())
                 <a href="{{ route('projects.archived') }}" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
-                    Архив
+                    
                 </a>
                 <a href="{{ route('projects.create') }}" class="minimal-btn minimal-btn-primary">
                     <i class="bi bi-plus-lg"></i>
@@ -45,7 +55,7 @@
             @else
                 <a href="{{ route('projects.archived') }}" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
-                    Архив
+                    
                 </a>
             @endif
         </div>
@@ -416,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1">
                 <div class="wizard-container text-center" style="max-width: 500px; width: 100%;">
                     <div class="mb-5">
-                        <i class="bi bi-person-badge" style="font-size: 5rem; color: #007bff;"></i>
+                        <i class="bi bi-person-badge" style="font-size: 5rem; color: #a70000;"></i>
                     </div>
                     
                     <div class="d-grid gap-3">

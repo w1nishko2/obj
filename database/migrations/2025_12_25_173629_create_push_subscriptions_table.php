@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('push_subscriptions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->string('endpoint', 500)->unique();
-            $table->string('public_key')->nullable();
-            $table->string('auth_token')->nullable();
-            $table->string('content_encoding')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('push_subscriptions')) {
+            Schema::create('push_subscriptions', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+                $table->string('endpoint', 500)->unique();
+                $table->string('public_key')->nullable();
+                $table->string('auth_token')->nullable();
+                $table->string('content_encoding')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**

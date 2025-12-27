@@ -264,12 +264,39 @@ class User extends Authenticatable
 
     public function hasPaidPlan()
     {
-        return in_array($this->subscription_type, ['monthly', 'yearly']);
+        // Проверяем все платные тарифы (кроме free)
+        return in_array($this->subscription_type, [
+            'starter', 'starter_yearly',
+            'professional', 'professional_yearly',
+            'corporate', 'corporate_yearly',
+            // Старые тарифы (для обратной совместимости)
+            'monthly', 'yearly'
+        ]);
     }
 
     public function hasAnyPlan()
     {
         return $this->subscription_type !== null;
+    }
+
+    /**
+     * Проверяет, не истекла ли подписка
+     */
+    public function isSubscriptionExpired()
+    {
+        if (!$this->subscription_expires_at) {
+            return false; // Бессрочная подписка
+        }
+
+        return $this->subscription_expires_at->isPast();
+    }
+
+    /**
+     * Проверяет, есть ли активная подписка
+     */
+    public function hasActiveSubscription()
+    {
+        return $this->hasAnyPlan() && !$this->isSubscriptionExpired();
     }
 
     public function canCreateProjects()
@@ -279,25 +306,81 @@ class User extends Authenticatable
             return false;
         }
 
-        if ($this->hasPaidPlan()) {
-            return true; // Платный тариф - без ограничений
+        // Проверяем, не истекла ли подписка
+        if ($this->isSubscriptionExpired()) {
+            return false;
+        }
+
+        $plan = \App\Models\Plan::where('slug', $this->subscription_type)->first();
+        
+        if (!$plan) {
+            return false;
+        }
+
+        $maxProjects = $plan->features['max_projects'] ?? 0;
+        
+        // null = безлимит (корпоративный тариф)
+        if ($maxProjects === null) {
+            return true;
         }
         
-        // Бесплатный тариф - максимум 2 проекта
-        return $this->projects()->count() < 2;
+        $currentProjectsCount = $this->projects()->count();
+        return $currentProjectsCount < $maxProjects;
     }
 
     public function canGenerateDocuments($project = null)
     {
         // Если проект не передан или пользователь является владельцем
         if ($project === null || $this->ownsProject($project)) {
-            // Только платные тарифы могут генерировать документы
-            return $this->hasPaidPlan();
+            // Проверяем активность подписки
+            if (!$this->hasActiveSubscription()) {
+                return false;
+            }
+
+            $plan = \App\Models\Plan::where('slug', $this->subscription_type)->first();
+            
+            if (!$plan) {
+                return false;
+            }
+            
+            return $plan->features['can_generate_documents'] ?? false;
         }
         
         // Если пользователь не владелец, проверяем тариф владельца проекта
         $projectOwner = is_object($project) ? $project->user : \App\Models\Project::find($project)?->user;
-        return $projectOwner ? $projectOwner->hasPaidPlan() : false;
+        return $projectOwner ? $projectOwner->canGenerateDocuments() : false;
+    }
+
+    public function canGenerateEstimates()
+    {
+        // Проверяем активность подписки
+        if (!$this->hasActiveSubscription()) {
+            return false;
+        }
+
+        $plan = \App\Models\Plan::where('slug', $this->subscription_type)->first();
+        
+        if (!$plan) {
+            return false;
+        }
+        
+        return $plan->features['can_generate_estimates'] ?? false;
+    }
+
+    public function canArchiveProjects()
+    {
+        // Проверяем активность подписки
+        if (!$this->hasActiveSubscription()) {
+            return false;
+        }
+
+        $plan = \App\Models\Plan::where('slug', $this->subscription_type)->first();
+        
+        if (!$plan) {
+            return false;
+        }
+        
+        return $plan->features['can_archive_projects'] ?? false;
     }
 
     public function getRemainingProjectsCount()
@@ -307,11 +390,20 @@ class User extends Authenticatable
             return 0;
         }
 
-        if ($this->hasPaidPlan()) {
-            return null; // Безлимит
+        $plan = \App\Models\Plan::where('slug', $this->subscription_type)->first();
+        
+        if (!$plan) {
+            return 0;
+        }
+
+        $maxProjects = $plan->features['max_projects'] ?? 0;
+        
+        // null = безлимит
+        if ($maxProjects === null) {
+            return null;
         }
         
-        return max(0, 2 - $this->projects()->count());
+        return max(0, $maxProjects - $this->projects()->count());
     }
 
     /**

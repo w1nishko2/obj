@@ -24,8 +24,19 @@
             <div class="subscription-warning-content">
                 <i class="bi bi-info-circle"></i>
                 <div>
-                    <strong>Стартовый тариф "Прораб Старт"</strong>
-                    <p>Доступно проектов: <?php echo e(Auth::user()->getRemainingProjectsCount()); ?> из 2. 
+                    <strong>Текущий тариф: <?php if(Auth::user()->subscription_type === 'free'): ?> Бесплатный <?php elseif(str_contains(Auth::user()->subscription_type, 'starter')): ?> Стартовый <?php elseif(str_contains(Auth::user()->subscription_type, 'professional')): ?> Профессиональный <?php elseif(str_contains(Auth::user()->subscription_type, 'corporate')): ?> Корпоративный <?php else: ?> Не активен <?php endif; ?></strong>
+                    <?php
+                        $remaining = Auth::user()->getRemainingProjectsCount();
+                        $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
+                        $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+                    ?>
+                    <p>Доступно проектов: 
+                        <?php if($remaining === null): ?>
+                            безлимит
+                        <?php else: ?>
+                            <?php echo e($remaining); ?> из <?php echo e($maxProjects); ?>
+
+                        <?php endif; ?> 
                     <a href="<?php echo e(route('pricing.index')); ?>">Оформите подписку</a> для снятия ограничений.</p>
                 </div>
             </div>
@@ -38,7 +49,7 @@
             <?php if(Auth::user()->isForeman()): ?>
                 <a href="<?php echo e(route('projects.archived')); ?>" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
-                    Архив
+                    
                 </a>
                 <a href="<?php echo e(route('projects.create')); ?>" class="minimal-btn minimal-btn-primary">
                     <i class="bi bi-plus-lg"></i>
@@ -47,7 +58,7 @@
             <?php else: ?>
                 <a href="<?php echo e(route('projects.archived')); ?>" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
-                    Архив
+                    
                 </a>
             <?php endif; ?>
         </div>
@@ -422,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1">
                 <div class="wizard-container text-center" style="max-width: 500px; width: 100%;">
                     <div class="mb-5">
-                        <i class="bi bi-person-badge" style="font-size: 5rem; color: #007bff;"></i>
+                        <i class="bi bi-person-badge" style="font-size: 5rem; color: #a70000;"></i>
                     </div>
                     
                     <div class="d-grid gap-3">

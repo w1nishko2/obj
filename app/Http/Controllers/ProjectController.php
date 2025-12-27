@@ -5,10 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\ProjectStage;
 use App\Models\ProjectParticipant;
+use App\Models\WorkTemplateType;
+use App\Models\WorkTemplateStage;
+use App\Models\WorkTemplateTask;
 use App\Services\ProjectNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -54,7 +59,14 @@ class ProjectController extends Controller
                 ->with('error', 'Для создания проектов необходимо активировать тариф Прораба.');
         }
 
-        return view('projects.create');
+        // Получаем шаблоны текущего пользователя для выбора типа работ
+        $templates = WorkTemplateType::with(['stages.tasks'])
+            ->forUser(Auth::id())
+            ->active()
+            ->orderBy('order')
+            ->get();
+
+        return view('projects.create', compact('templates'));
     }
 
     public function store(Request $request)
@@ -65,9 +77,17 @@ class ProjectController extends Controller
                 ->with('error', 'Для создания проектов необходимо активировать тариф Прораба.');
         }
 
-        // Проверка лимита проектов для бесплатного тарифа
+        // Проверка лимита проектов
         if (!Auth::user()->canCreateProjects()) {
-            return redirect()->back()->with('error', 'Достигнут лимит проектов для бесплатного тарифа. Оформите подписку для создания неограниченного количества проектов.');
+            $user = Auth::user();
+            $plan = \App\Models\Plan::where('slug', $user->subscription_type)->first();
+            $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+            
+            $message = $maxProjects === 1 
+                ? 'Достигнут лимит проектов для бесплатного тарифа (1 проект). Оформите подписку для создания большего количества проектов.'
+                : "Достигнут лимит проектов ({$maxProjects} проектов). Оформите подписку на более высокий тариф.";
+            
+            return redirect()->back()->with('error', $message);
         }
 
         $validated = $request->validate([
@@ -75,6 +95,7 @@ class ProjectController extends Controller
             'address' => 'required|string|max:255',
             'work_type' => 'nullable|string|max:255',
             'markup_percent' => 'nullable|numeric|min:0|max:999.99',
+            'template_id' => 'nullable|exists:work_template_types,id',
             'use_templates' => 'nullable|boolean',
             'stages' => 'nullable|array',
             'stages.*.name' => 'required|string|max:255',
@@ -87,10 +108,13 @@ class ProjectController extends Controller
             'participants.*.role' => 'required|in:Клиент,Исполнитель',
         ]);
 
-        $project = Auth::user()->projects()->create([
+        // Используем транзакцию для атомарности операции
+        $project = DB::transaction(function () use ($validated) {
+            $project = Auth::user()->projects()->create([
             'name' => $validated['name'],
             'address' => $validated['address'],
             'work_type' => $validated['work_type'] ?? null,
+            'markup_percent' => $validated['markup_percent'] ?? 0,
             'status' => 'В работе',
         ]);
 
@@ -102,7 +126,44 @@ class ProjectController extends Controller
             ...(\App\Models\ProjectUserRole::getDefaultPermissions('owner'))
         ]);
 
-        if (isset($validated['stages'])) {
+        // Если выбран шаблон, создаём этапы и задачи из него
+        if (isset($validated['template_id'])) {
+            $template = WorkTemplateType::with(['stages.tasks'])
+                ->findOrFail($validated['template_id']);
+            
+            // Сохраняем название типа работ из шаблона
+            $project->update(['work_type' => $template->name]);
+            
+            $currentDate = now();
+            
+            foreach ($template->stages as $index => $templateStage) {
+                $endDate = $currentDate->copy()->addDays($templateStage->duration_days);
+                
+                $stage = $project->stages()->create([
+                    'name' => $templateStage->name,
+                    'start_date' => $currentDate->format('Y-m-d'),
+                    'end_date' => $endDate->format('Y-m-d'),
+                    'order' => $index,
+                    'status' => 'Не начат',
+                ]);
+
+                // Создаём задачи из шаблона
+                foreach ($templateStage->tasks as $taskIndex => $templateTask) {
+                    $stage->tasks()->create([
+                        'name' => $templateTask->name,
+                        'description' => $templateTask->description,
+                        'price' => $templateTask->price,
+                        'status' => 'Не начата',
+                        'order' => $taskIndex,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+                
+                // Следующий этап начинается после окончания текущего
+                $currentDate = $endDate->addDay();
+            }
+        } elseif (isset($validated['stages'])) {
+            // Создаём этапы вручную (старая логика)
             foreach ($validated['stages'] as $index => $stageData) {
                 $stage = $project->stages()->create([
                     'name' => $stageData['name'],
@@ -119,13 +180,26 @@ class ProjectController extends Controller
                         : $stageData['template_tasks'];
                     
                     if (is_array($tasks)) {
-                        foreach ($tasks as $taskIndex => $taskName) {
-                            $stage->tasks()->create([
-                                'name' => $taskName,
-                                'status' => 'Не начата',
-                                'order' => $taskIndex,
-                                'created_by' => Auth::id(),
-                            ]);
+                        foreach ($tasks as $taskIndex => $taskData) {
+                            // Задача может быть строкой или массивом с данными
+                            if (is_string($taskData)) {
+                                $stage->tasks()->create([
+                                    'name' => $taskData,
+                                    'status' => 'Не начата',
+                                    'order' => $taskIndex,
+                                    'created_by' => Auth::id(),
+                                ]);
+                            } elseif (is_array($taskData)) {
+                                // Если задача содержит полные данные (id, name, price и т.д.)
+                                $stage->tasks()->create([
+                                    'name' => $taskData['name'] ?? 'Задача',
+                                    'description' => $taskData['description'] ?? null,
+                                    'price' => $taskData['price'] ?? 0,
+                                    'status' => 'Не начата',
+                                    'order' => $taskIndex,
+                                    'created_by' => Auth::id(),
+                                ]);
+                            }
                         }
                     }
                 }
@@ -137,7 +211,7 @@ class ProjectController extends Controller
                 // Ищем пользователя по телефону
                 $user = \App\Models\User::where('phone', $participantData['phone'])->first();
 
-                \Log::info('Adding participant to project', [
+                Log::info('Adding participant to project', [
                     'phone' => $participantData['phone'],
                     'user_found' => $user ? 'yes' : 'no',
                     'user_id' => $user?->id,
@@ -166,7 +240,7 @@ class ProjectController extends Controller
                         ...$permissions,
                     ]);
                     
-                    \Log::info('Created user role in project', [
+                    Log::info('Created user role in project', [
                         'role_id' => $createdRole->id,
                         'user_id' => $user->id,
                         'project_id' => $project->id,
@@ -175,6 +249,9 @@ class ProjectController extends Controller
                 }
             }
         }
+
+        return $project; // Возвращаем созданный проект из транзакции
+    });
 
         return redirect()->route('projects.show', $project)->with([
             'success' => 'Проект успешно создан!',
@@ -186,9 +263,25 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['stages', 'participants', 'documents.uploader', 'userRoles']);
+        // Загружаем только первые 12 этапов для начального отображения
+        $project->load([
+            'stages' => function($query) {
+                $query->withCount(['tasks', 'materials'])
+                      ->orderBy('order')
+                      ->limit(12);
+            },
+            'participants', 
+            'documents.uploader', 
+            'userRoles'
+        ]);
+        
+        // Получаем общее количество этапов для условного отображения поиска
+        $totalStages = \App\Models\ProjectStage::where('project_id', $project->id)->count();
+        
+        // Кешируем роль текущего пользователя для предотвращения N+1 запросов
+        $currentUserRole = Auth::user()->getRoleInProject($project);
 
-        return view('projects.show', compact('project'));
+        return view('projects.show', compact('project', 'currentUserRole', 'totalStages'));
     }
 
     public function edit(Project $project)
@@ -274,7 +367,7 @@ class ProjectController extends Controller
         try {
             $this->notificationService->notifyStageCreated($project, $stage, Auth::user());
         } catch (\Exception $e) {
-            \Log::error('Failed to send push notification for stage created: ' . $e->getMessage());
+            Log::error('Failed to send push notification for stage created: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Этап успешно создан!')
@@ -313,6 +406,13 @@ class ProjectController extends Controller
 
         $stage->update(['status' => $validated['status']]);
 
+        // Отправляем push-уведомление участникам проекта
+        try {
+            $this->notificationService->notifyStageStatusChanged($project, $stage, $validated['status'], Auth::user());
+        } catch (\Exception $e) {
+            Log::error('Failed to send push notification for stage status changed: ' . $e->getMessage());
+        }
+
         // Проверяем, если это AJAX запрос
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
@@ -341,7 +441,7 @@ class ProjectController extends Controller
         // Ищем пользователя по номеру телефона
         $user = \App\Models\User::where('phone', $validated['phone'])->first();
 
-        \Log::info('Adding participant via addParticipant method', [
+        Log::info('Adding participant via addParticipant method', [
             'phone' => $validated['phone'],
             'user_found' => $user ? 'yes' : 'no',
             'user_id' => $user?->id,
@@ -378,7 +478,7 @@ class ProjectController extends Controller
                 ...$permissions,
             ]);
             
-            \Log::info('Created user role via addParticipant', [
+            Log::info('Created user role via addParticipant', [
                 'role_id' => $createdRole->id,
                 'user_id' => $user->id,
                 'project_id' => $project->id,
@@ -389,7 +489,7 @@ class ProjectController extends Controller
             try {
                 $this->notificationService->notifyParticipantAdded($project, $user, Auth::user());
             } catch (\Exception $e) {
-                \Log::error('Failed to send push notification for participant added: ' . $e->getMessage());
+                Log::error('Failed to send push notification for participant added: ' . $e->getMessage());
             }
 
             $message = 'Участник добавлен и получил доступ к проекту!';
@@ -444,7 +544,7 @@ class ProjectController extends Controller
 
         $validated = $request->validate([
             'documents' => 'required|array',
-            'documents.*' => 'file|max:204800', // максимум 200MB на файл
+            'documents.*' => 'file|max:204800|mimes:pdf,doc,docx,xls,xlsx,png,jpg,jpeg,gif,svg,webp,dwg,dxf,zip,rar,7z,txt,csv', // максимум 200MB на файл
             'name' => 'nullable|string|max:255',
             'description' => 'nullable|string|max:500',
         ]);
@@ -497,7 +597,7 @@ class ProjectController extends Controller
         }
         
         // Удаляем файл из хранилища
-        \Storage::disk('public')->delete($document->file_path);
+        Storage::disk('public')->delete($document->file_path);
         
         $document->delete();
 
@@ -508,6 +608,11 @@ class ProjectController extends Controller
     public function generateEstimatePDF(Project $project)
     {
         $this->authorize('generateReports', $project);
+
+        // Проверяем, может ли пользователь генерировать сметы
+        if (!Auth::user()->canGenerateEstimates()) {
+            return redirect()->back()->with('error', 'Генерация смет доступна только на платных тарифах. Оформите подписку для доступа к этой функции.');
+        }
 
         // Загружаем все данные проекта
         $project->load([
@@ -528,6 +633,11 @@ class ProjectController extends Controller
     public function generateEstimateExcel(Project $project)
     {
         $this->authorize('generateReports', $project);
+
+        // Проверяем, может ли пользователь генерировать сметы
+        if (!Auth::user()->canGenerateEstimates()) {
+            return redirect()->back()->with('error', 'Генерация смет доступна только на платных тарифах. Оформите подписку для доступа к этой функции.');
+        }
 
         // Загружаем все данные проекта
         $project->load([
@@ -659,5 +769,36 @@ class ProjectController extends Controller
         return redirect()->route('projects.show', $project)
             ->with('success', 'Этап удален вместе со всеми задачами, материалами и фотоотчетами!')
             ->with('tab', 'stages');
+    }
+
+    /**
+     * Поиск и пагинация этапов проекта (Ajax)
+     */
+    public function searchStages(Request $request, Project $project)
+    {
+        $this->authorize('view', $project);
+
+        $query = ProjectStage::where('project_id', $project->id)
+            ->with(['tasks', 'materials', 'deliveries'])
+            ->withCount(['tasks', 'materials']);
+
+        // Нечеткий поиск (fuzzy search) с ~70% совпадением
+        if ($request->has('search') && $request->search) {
+            $searchTerm = $request->search;
+            $query->where(function($q) use ($searchTerm) {
+                // Точное совпадение
+                $q->where('name', 'LIKE', '%' . $searchTerm . '%')
+                  // Поиск по частям слова
+                  ->orWhere('name', 'LIKE', '%' . str_replace(' ', '%', $searchTerm) . '%');
+            });
+        }
+
+        $stages = $query->orderBy('order')->paginate(12);
+
+        return response()->json([
+            'stages' => $stages->items(),
+            'has_more' => $stages->hasMorePages(),
+            'next_page' => $stages->currentPage() + 1,
+        ]);
     }
 }

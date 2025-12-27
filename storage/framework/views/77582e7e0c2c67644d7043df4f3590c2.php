@@ -90,7 +90,7 @@
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
-                                                <a class="dropdown-item" href="<?php echo e(route('projects.estimate.pdf', $project)); ?>" target="_blank">
+                                                <a class="dropdown-item" href="<?php echo e(route('projects.estimate.pdf', $project)); ?>" target="_blank" rel="noopener noreferrer">
                                                     <i class="bi bi-file-pdf text-danger me-2"></i>
                                                     PDF формат
                                                 </a>
@@ -109,7 +109,7 @@
                                         <i class="bi bi-file-earmark-text"></i> Документы
                                     </a>
                                 <?php else: ?>
-                                    <?php if(Auth::user()->getRoleInProject($project) && Auth::user()->getRoleInProject($project)->role === 'owner'): ?>
+                                    <?php if($currentUserRole && $currentUserRole->role === 'owner'): ?>
                                         <button type="button" class="btn btn-sm btn-outline-secondary" disabled data-bs-toggle="tooltip" title="Доступно на платных тарифах">
                                             <i class="bi bi-lock"></i> Смета
                                         </button>
@@ -184,12 +184,34 @@
             </div>
             <?php endif; ?>
 
+            <!-- Поисковая строка (показывается если > 15 этапов) -->
+            <?php if($totalStages > 15): ?>
+            <div class="row mb-3">
+                <div class="col">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" 
+                               class="form-control" 
+                               id="stagesSearchInput" 
+                               placeholder="Поиск этапа..."
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary" type="button" id="clearStagesSearch" style="display: none;">
+                            <i class="bi bi-x-lg"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Начните вводить название этапа для поиска</small>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <?php if($project->stages->isEmpty()): ?>
-                <div class="alert alert-info">
+                <div class="alert alert-info" id="noStagesMessage">
                     У этого проекта пока нет этапов
                 </div>
             <?php else: ?>
-                <div class="row">
+                <div class="row" id="stagesContainer" data-project-id="<?php echo e($project->id); ?>">
                     <?php $__currentLoopData = $project->stages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $stage): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <div class="col-md-6 mb-3">
                             <div class="card stage-card position-relative" 
@@ -304,6 +326,20 @@
                         </div>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
+                
+                <!-- Индикатор загрузки для infinite scroll -->
+                <div class="col-12 text-center py-3 d-none" id="stagesLoader">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                </div>
+                
+                <!-- Сообщение об отсутствии результатов поиска -->
+                <div class="col-12 d-none" id="noStagesFound">
+                    <div class="alert alert-info">
+                        <i class="bi bi-search"></i> Ничего не найдено. Попробуйте изменить запрос.
+                    </div>
+                </div>
             <?php endif; ?>
 
             
@@ -330,10 +366,10 @@
                                         <hr>
                                         <p class="mb-1"><strong>Будет удалено:</strong></p>
                                         <ul class="mb-0">
-                                            <li><?php echo e($stage->tasks->count()); ?> <?php echo e(Str::plural('задача', $stage->tasks->count())); ?></li>
-                                            <li><?php echo e($stage->tasks->sum(fn($t) => $t->photos->count())); ?> <?php echo e(Str::plural('фото', $stage->tasks->sum(fn($t) => $t->photos->count()))); ?></li>
-                                            <li><?php echo e($stage->tasks->sum(fn($t) => $t->comments->count())); ?> <?php echo e(Str::plural('комментарий', $stage->tasks->sum(fn($t) => $t->comments->count()))); ?></li>
-                                            <li><?php echo e($stage->materials->count()); ?> <?php echo e(Str::plural('материал', $stage->materials->count())); ?></li>
+                                            <li><?php echo e($stage->tasks_count ?? $stage->tasks->count()); ?> <?php echo e(Str::plural('задача', $stage->tasks_count ?? $stage->tasks->count())); ?></li>
+                                            <li><?php echo e($stage->tasks->sum('photos_count')); ?> <?php echo e(Str::plural('фото', $stage->tasks->sum('photos_count'))); ?></li>
+                                            <li><?php echo e($stage->tasks->sum('comments_count')); ?> <?php echo e(Str::plural('комментарий', $stage->tasks->sum('comments_count'))); ?></li>
+                                            <li><?php echo e($stage->materials_count ?? $stage->materials->count()); ?> <?php echo e(Str::plural('материал', $stage->materials_count ?? $stage->materials->count())); ?></li>
                                         </ul>
                                     </div>
                                 </div>
@@ -466,14 +502,14 @@
         <div class="tab-pane fade" id="contacts" role="tabpanel">
             <?php
                 $foreman = $project->user; // Владелец проекта (прораб)
-                $currentUserRole = Auth::user()->getRoleInProject($project);
                 $isExecutor = $currentUserRole && $currentUserRole->role === 'executor';
                 $isClient = $currentUserRole && $currentUserRole->role === 'client';
+                $isForeman = auth()->user()->id === $foreman->id; // Является ли текущий пользователь прорабом
             ?>
             
             <div class="row">
-                <!-- Карточка прораба -->
-                <?php if($foreman): ?>
+                <!-- Карточка прораба (исполнители НЕ видят телефон) -->
+                <?php if($foreman && !$isExecutor): ?>
                 <div class="col-md-6 mb-3">
                     <div class="card border-primary">
                         <div class="card-body">
@@ -501,6 +537,11 @@
                         $participantUserRole = $participant->user_id 
                             ? $project->userRoles->where('user_id', $participant->user_id)->first() 
                             : null;
+                        
+                        // Участники без user_id (статус "Участник") видны только прорабу
+                        if (!$participant->user_id && !$isForeman) {
+                            continue;
+                        }
                         
                         // Исполнители не видят клиентов
                         if ($isExecutor && $participantUserRole && $participantUserRole->role === 'client') {
@@ -591,15 +632,15 @@
                                     </div>
 
                                     <div class="d-flex gap-2">
-                                        <a href="<?php echo e(Storage::url($document->file_path)); ?>" 
+                                        <a href="<?php echo e($document->secure_url); ?>" 
                                            class="btn btn-sm btn-outline-primary" 
                                            target="_blank" 
+                                           rel="noopener noreferrer"
                                            download>
                                             <i class="bi bi-download"></i> Скачать
                                         </a>
                                         <?php
-                                            $userRole = Auth::user()->getRoleInProject($project);
-                                            $isOwner = $userRole && $userRole->role === 'owner';
+                                            $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                                             $canDeleteDoc = $document->uploaded_by === Auth::id() || $isOwner;
                                         ?>
                                         <?php if($canDeleteDoc): ?>
@@ -703,7 +744,7 @@
                             <button type="button" class="btn btn-primary btn-lg" onclick="document.getElementById('documentFiles').click()">
                                 <i class="bi bi-folder2-open"></i> Выбрать файлы
                             </button>
-                            <p class="upload-info mt-3">Можно загрузить несколько файлов. Максимальный размер: 10 МБ</p>
+                            <p class="upload-info mt-3">Можно загрузить несколько файлов. Максимальный размер: 200 МБ</p>
                         </div>
                         <div class="upload-preview d-none" id="uploadPreview">
                             <div class="files-list" id="filesList"></div>
@@ -962,7 +1003,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ВОССТАНОВЛЕНИЕ СОСТОЯНИЯ СТРАНИЦЫ
     // ========================================
     
-    const projectId = '<?php echo e($project->id); ?>';
+    const projectId = <?php echo json_encode($project->id, 15, 512) ?>;
     const storageKey = `project_${projectId}_active_tab`;
 
     // Сохранение активной вкладки при переключении
@@ -1089,9 +1130,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let hasValidFiles = false;
         Array.from(files).forEach((file, index) => {
-            // Проверка размера файла (10 МБ)
-            if (file.size > 10 * 1024 * 1024) {
-                alert(`Файл "${file.name}" слишком большой! Максимальный размер: 10 МБ`);
+            // Проверка размера файла (200 МБ - соответствует бэкенду)
+            const MAX_FILE_SIZE = 204800 * 1024; // 200 MB в байтах
+            if (file.size > MAX_FILE_SIZE) {
+                alert(`Файл "${file.name}" слишком большой! Максимальный размер: 200 МБ`);
                 return;
             }
             
@@ -1638,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="d-flex justify-content-center py-4">
                     <div class="wizard-container text-center" style="max-width: 600px; width: 100%; padding: 1rem;">
                         <div class="mb-4">
-                            <i class="bi bi-lightbulb" style="font-size: 4rem; color: #007bff;"></i>
+                            <i class="bi bi-lightbulb" style="font-size: 4rem; color: #a70000;"></i>
                         </div>
                         <h2 class="mb-3">Быстрая подсказка</h2>
                         <p class="text-muted mb-4">Узнайте основные возможности работы с проектом</p>
@@ -1646,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <!-- Первая подсказка -->
                         <div class="tutorial-item mb-4 text-start">
                             <div class="d-flex align-items-start mb-3">
-                                <div class="tutorial-number me-3" style="background: #007bff; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
+                                <div class="tutorial-number me-3" style="background: #a70000; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
                                     1
                                 </div>
                                 <div>
@@ -1666,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <!-- Видео инструкция -->
                         <div class="tutorial-item mb-4 text-start">
                             <div class="d-flex align-items-start mb-3">
-                                <div class="tutorial-number me-3" style="background: #007bff; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
+                                <div class="tutorial-number me-3" style="background: #a70000; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600; flex-shrink: 0;">
                                     2
                                 </div>
                                 <div>
@@ -1724,6 +1766,186 @@ function closeTutorial() {
         }
     }
 }
+
+// ========================================
+// Поиск и пагинация этапов
+// ========================================
+const stagesContainer = document.getElementById('stagesContainer');
+const stagesSearchInput = document.getElementById('stagesSearchInput');
+const clearStagesSearch = document.getElementById('clearStagesSearch');
+const stagesLoader = document.getElementById('stagesLoader');
+const noStagesFound = document.getElementById('noStagesFound');
+
+console.log('Поиск этапов - элементы:', {
+    stagesContainer: !!stagesContainer,
+    stagesSearchInput: !!stagesSearchInput,
+    clearStagesSearch: !!clearStagesSearch,
+    stagesLoader: !!stagesLoader,
+    noStagesFound: !!noStagesFound
+});
+
+// Глобальные переменные для поиска этапов
+let stagesPage = 2;
+let stagesLoading = false;
+let stagesHasMore = <?php echo e($totalStages > 12 ? 'true' : 'false'); ?>;
+let stagesSearchQuery = '';
+let stagesSearchTimeout = null;
+
+// Функция загрузки этапов
+async function loadStages() {
+    if (stagesLoading || !stagesHasMore || !stagesContainer) return;
+
+    console.log('loadStages вызвана. Page:', stagesPage, 'Query:', stagesSearchQuery);
+    
+    stagesLoading = true;
+    if (stagesLoader) stagesLoader.classList.remove('d-none');
+    if (noStagesFound) noStagesFound.classList.add('d-none');
+
+    try {
+        const projectId = stagesContainer.dataset.projectId;
+        const url = `/projects/${projectId}/search-stages?page=${stagesPage}${stagesSearchQuery ? '&search=' + encodeURIComponent(stagesSearchQuery) : ''}`;
+        
+        console.log('Запрос к URL:', url);
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        console.log('Ответ от сервера:', data);
+
+        if (data.stages && data.stages.length > 0) {
+            data.stages.forEach(stage => {
+                stagesContainer.insertAdjacentHTML('beforeend', renderStageCard(stage));
+            });
+
+            stagesHasMore = data.has_more;
+            if (stagesHasMore) {
+                stagesPage = data.next_page;
+            }
+        } else if (stagesPage === 1) {
+            console.log('Результаты поиска пусты');
+            if (noStagesFound) noStagesFound.classList.remove('d-none');
+        }
+
+    } catch (error) {
+        console.error('Ошибка загрузки этапов:', error);
+    } finally {
+        stagesLoading = false;
+        if (stagesLoader) stagesLoader.classList.add('d-none');
+    }
+}
+
+function renderStageCard(stage) {
+    const projectId = stagesContainer.dataset.projectId;
+    const tasksCount = stage.tasks_count || 0;
+    const totalCost = stage.total_cost || 0;
+    
+    return `
+        <div class="col-md-6 mb-3">
+            <div class="card stage-card position-relative" 
+                 style="cursor: pointer;" 
+                 onclick="window.location.href='/projects/${projectId}/stages/${stage.id}'">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">${escapeHtml(stage.name)}</h5>
+                        ${tasksCount > 0 ? `<span class="badge bg-info">${tasksCount} задач</span>` : ''}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="mb-0">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> 
+                                ${formatDate(stage.start_date)} - ${formatDate(stage.end_date)}
+                            </small>
+                        </p>
+                        
+                        ${totalCost > 0 ? `
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-currency-dollar"></i> ${formatCurrency(totalCost)} ₽
+                            </span>
+                        ` : ''}
+                    </div>
+                    
+                    ${stage.status === 'Готово' ? `
+                        <div class="alert alert-success mb-0 py-2">
+                            <i class="bi bi-check-circle"></i> Этап завершен
+                        </div>
+                    ` : stage.status === 'В работе' ? `
+                        <div class="alert alert-primary mb-0 py-2">
+                            <i class="bi bi-hourglass-split"></i> В процессе выполнения
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU').format(amount);
+}
+
+// Инициализация поиска этапов
+if (stagesSearchInput) {
+    console.log('Инициализация поиска этапов');
+    stagesSearchInput.addEventListener('input', function() {
+        console.log('Ввод в поиск этапов:', this.value);
+        clearTimeout(stagesSearchTimeout);
+        
+        if (this.value.trim()) {
+            if (clearStagesSearch) clearStagesSearch.style.display = 'block';
+        } else {
+            if (clearStagesSearch) clearStagesSearch.style.display = 'none';
+        }
+        
+        stagesSearchTimeout = setTimeout(() => {
+            stagesSearchQuery = this.value.trim();
+            console.log('Запуск поиска этапов с запросом:', stagesSearchQuery);
+            stagesPage = 1;
+            stagesHasMore = true;
+            if (stagesContainer) {
+                stagesContainer.innerHTML = '';
+                loadStages();
+            }
+        }, 800);
+    });
+}
+
+if (clearStagesSearch) {
+    clearStagesSearch.addEventListener('click', function() {
+        if (stagesSearchInput) stagesSearchInput.value = '';
+        this.style.display = 'none';
+        stagesSearchQuery = '';
+        window.location.reload();
+    });
+}
+
+if (stagesContainer) {
+if (stagesContainer) {
+    // Infinite scroll
+    const stagesObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !stagesLoading && stagesHasMore) {
+                loadStages();
+            }
+        });
+    }, { threshold: 0.1 });
+
+    if (stagesLoader) {
+        stagesObserver.observe(stagesLoader);
+    }
+}
+
 </script>
 <?php endif; ?>
 

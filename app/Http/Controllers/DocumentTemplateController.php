@@ -45,6 +45,11 @@ class DocumentTemplateController extends Controller
             abort(403, 'Доступ к генерации документов разрешен только прорабам');
         }
 
+        // Проверяем, может ли пользователь генерировать документы
+        if (!auth()->user()->canGenerateDocuments()) {
+            return redirect()->back()->with('error', 'Генерация документов доступна только на платных тарифах. Оформите подписку для доступа к этой функции.');
+        }
+
         // Загружаем все необходимые данные проекта
         $project->load(['stages.tasks.assignedUser', 'stages.materials.user', 'stages.deliveries.user', 'user']);
 

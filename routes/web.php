@@ -21,6 +21,16 @@ Route::post('/contact', [App\Http\Controllers\LandingController::class, 'contact
 // SEO файлы
 Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 
+// Публичная страница для инвесторов
+Route::get('/investors', function () {
+    return view('investors');
+})->name('investors');
+
+// Тестовая страница для проверки CSRF Token Auto-Refresh
+Route::get('/csrf-test', function () {
+    return view('csrf-test');
+})->name('csrf.test');
+
 // Альтернативный URL для лендинга
 Route::get('/landing', function () {
     return redirect()->route('landing', [], 301);
@@ -51,6 +61,19 @@ Route::middleware('auth')->group(function () {
     // Выбор роли пользователя
     Route::post('/user/select-role', [App\Http\Controllers\ProfileController::class, 'selectRole'])->name('user.select-role');
     
+    // Прайсы и шаблоны работ
+    Route::get('/prices', [App\Http\Controllers\PriceTemplateController::class, 'index'])->name('prices.index');
+    Route::get('/prices/templates', [App\Http\Controllers\PriceTemplateController::class, 'getTemplates'])->name('prices.templates');
+    Route::post('/prices/types', [App\Http\Controllers\PriceTemplateController::class, 'storeType'])->name('prices.types.store');
+    Route::put('/prices/types/{type}', [App\Http\Controllers\PriceTemplateController::class, 'updateType'])->name('prices.types.update');
+    Route::delete('/prices/types/{type}', [App\Http\Controllers\PriceTemplateController::class, 'deleteType'])->name('prices.types.delete');
+    Route::post('/prices/stages', [App\Http\Controllers\PriceTemplateController::class, 'storeStage'])->name('prices.stages.store');
+    Route::put('/prices/stages/{stage}', [App\Http\Controllers\PriceTemplateController::class, 'updateStage'])->name('prices.stages.update');
+    Route::delete('/prices/stages/{stage}', [App\Http\Controllers\PriceTemplateController::class, 'deleteStage'])->name('prices.stages.delete');
+    Route::post('/prices/tasks', [App\Http\Controllers\PriceTemplateController::class, 'storeTask'])->name('prices.tasks.store');
+    Route::put('/prices/tasks/{task}', [App\Http\Controllers\PriceTemplateController::class, 'updateTask'])->name('prices.tasks.update');
+    Route::delete('/prices/tasks/{task}', [App\Http\Controllers\PriceTemplateController::class, 'deleteTask'])->name('prices.tasks.delete');
+    
     // Проекты
     Route::resource('projects', App\Http\Controllers\ProjectController::class);
     Route::get('/projects-archived', [App\Http\Controllers\ProjectController::class, 'archived'])->name('projects.archived');
@@ -75,12 +98,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/projects/{project}/client-data/edit', [App\Http\Controllers\DocumentTemplateController::class, 'editClientData'])->name('projects.client-data.edit');
     Route::put('/projects/{project}/client-data', [App\Http\Controllers\DocumentTemplateController::class, 'updateClientData'])->name('projects.client-data.update');
     
+    // Поиск и пагинация (Ajax) - ДОЛЖНЫ БЫТЬ ПЕРЕД динамическими маршрутами!
+    Route::get('/projects/{project}/search-stages', [App\Http\Controllers\ProjectController::class, 'searchStages'])->name('projects.stages.search');
+    
     // Этапы и задачи
     Route::get('/projects/{project}/stages/{stage}', [App\Http\Controllers\StageTaskController::class, 'showStage'])->name('stages.show');
     Route::post('/projects/{project}/stages/{stage}/tasks', [App\Http\Controllers\StageTaskController::class, 'storeTask'])->name('stages.tasks.store');
     Route::put('/projects/{project}/stages/{stage}/tasks/{task}', [App\Http\Controllers\StageTaskController::class, 'updateTask'])->name('stages.tasks.update');
     Route::post('/projects/{project}/stages/{stage}/tasks/{task}/status', [App\Http\Controllers\StageTaskController::class, 'updateTaskStatus'])->name('stages.tasks.status');
     Route::delete('/projects/{project}/stages/{stage}/tasks/{task}', [App\Http\Controllers\StageTaskController::class, 'destroyTask'])->name('stages.tasks.destroy');
+    
+    // Поиск задач (работает, т.к. идет после {stage})
+    Route::get('/projects/{project}/stages/{stage}/tasks/search', [App\Http\Controllers\StageTaskController::class, 'searchTasks'])->name('stages.tasks.search');
     
     // Комментарии и фото к задачам
     Route::post('/projects/{project}/stages/{stage}/tasks/{task}/comments', [App\Http\Controllers\StageTaskController::class, 'addComment'])->name('stages.tasks.comments.add');
@@ -108,7 +137,7 @@ Route::middleware('auth')->group(function () {
     // Тарифы и подписка
     Route::get('/pricing', function () {
         $plans = \App\Models\Plan::where('is_active', true)->orderBy('price')->get();
-        return view('pricing.index', compact('plans'));
+        return view('pricing.new-index', compact('plans'));
     })->name('pricing.index');
     
 
@@ -147,6 +176,13 @@ Route::middleware('auth')->group(function () {
 
 // Публичные push-маршруты (без авторизации)
 Route::get('/push/vapid-public-key', [App\Http\Controllers\PushSubscriptionController::class, 'getVapidPublicKey'])->name('push.vapid-key');
+
+// CSRF Token Refresh (без CSRF проверки для обновления токена)
+Route::get('/refresh-csrf', function () {
+    return response()->json([
+        'csrf_token' => csrf_token()
+    ]);
+})->name('refresh-csrf');
 
 // Webhook от YooKassa (без авторизации)
 Route::post('/payment/webhook', [App\Http\Controllers\PaymentController::class, 'webhook'])->name('payment.webhook');

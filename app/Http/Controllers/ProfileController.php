@@ -6,10 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 use App\Rules\ValidRussianPassport;
 use App\Rules\ValidRussianINN;
 use App\Rules\ValidRussianPhone;
+use App\Mail\EmailVerificationCode;
 
 class ProfileController extends Controller
 {
@@ -81,19 +84,22 @@ class ProfileController extends Controller
             'updated_at' => now(),
         ]);
 
-        // Отправка письма
-        $to = $request->email;
-        $subject = 'Код подтверждения email';
-        $message = "Ваш код подтверждения: {$code}\n\nКод действителен в течение 15 минут.";
-        $headers = "From: noreply@objectplus\r\n" .
-                   "Content-Type: text/plain; charset=UTF-8\r\n";
-
-        mail($to, $subject, $message, $headers);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Код отправлен на указанный email',
-        ]);
+        // Отправка письма через Laravel Mail
+        try {
+            Mail::to($request->email)->send(new EmailVerificationCode($code, 15));
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Код отправлен на указанный email',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send email verification code: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Не удалось отправить письмо. Попробуйте позже.',
+            ], 500);
+        }
     }
 
     public function verifyEmailCode(Request $request)

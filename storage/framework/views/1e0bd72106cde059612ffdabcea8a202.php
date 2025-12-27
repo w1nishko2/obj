@@ -144,14 +144,34 @@
         <div class="tab-content">
             <!-- Вкладка Задачи -->
             <div class="tab-pane fade show active" id="tasksTab">
-                
+                <!-- Поисковая строка (показывается если > 20 задач) -->
+                <?php if($totalTasks > 20): ?>
+                <div class="row mb-3">
+                    <div class="col">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="bi bi-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="tasksSearchInput" 
+                                   placeholder="Поиск задачи..."
+                                   autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" id="clearTasksSearch" style="display: none;">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Начните вводить название или описание задачи</small>
+                    </div>
+                </div>
+                <?php endif; ?>
 
                 <?php if($stage->tasks->isEmpty()): ?>
-                    <div class="alert alert-info">
+                    <div class="alert alert-info" id="noTasksMessage">
                         У этого этапа пока нет задач
                     </div>
                 <?php else: ?>
-                    <div class="row">
+                    <div class="row" id="tasksContainer" data-project-id="<?php echo e($project->id); ?>" data-stage-id="<?php echo e($stage->id); ?>">
                         <?php $__currentLoopData = $stage->tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="col-md-6 col-lg-4 mb-3">
                                 <div class="card h-100 task-card-compact position-relative" 
@@ -252,8 +272,7 @@
                                                     </div>
                                                 </div>
                                                 <?php
-                                                    $userRole = Auth::user()->getRoleInProject($project);
-                                                    $isOwner = $userRole && $userRole->role === 'owner';
+                                                    $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                                                     $isAssignedExecutor = $task->assigned_to === Auth::id();
                                                     $canChangeStatus = $isOwner || $isAssignedExecutor;
                                                 ?>
@@ -344,14 +363,13 @@
                                                         <?php $__empty_1 = true; $__currentLoopData = $task->photos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $photo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                                                             <div class="col-6 col-md-4 col-lg-3 col-xl-2">
                                                                 <div class="position-relative">
-                                                                    <img src="<?php echo e(asset('storage/' . $photo->photo_path)); ?>"
+                                                                    <img src="<?php echo e($photo->secure_url); ?>"
                                                                         class="img-fluid rounded shadow-sm"
                                                                         style="width: 100%; height: 200px; object-fit: cover; cursor: pointer;"
-                                                                        onclick="window.open('<?php echo e(asset('storage/' . $photo->photo_path)); ?>', '_blank')">
+                                                                        onclick="event.preventDefault(); window.open('<?php echo e($photo->secure_url); ?>', '_blank', 'noopener,noreferrer');">
 
                                                                     <?php
-                                                                        $userRole = Auth::user()->getRoleInProject($project);
-                                                                        $isOwner = $userRole && $userRole->role === 'owner';
+                                                                        $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                                                                         $canDelete = $photo->user_id === Auth::id() || $isOwner;
                                                                     ?>
                                                                     <?php if($canDelete): ?>
@@ -430,8 +448,7 @@
                                                                                         <?php echo e($comment->comment); ?></p>
                                                                                 </div>
                                                                                 <?php
-                                                                                    $userRole = Auth::user()->getRoleInProject($project);
-                                                                                    $isOwner = $userRole && $userRole->role === 'owner';
+                                                                                    $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                                                                                     $canDelete = $comment->user_id === Auth::id() || $isOwner;
                                                                                 ?>
                                                                                 <?php if($canDelete): ?>
@@ -577,12 +594,25 @@
                             </div>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
+                    
+                    <!-- Индикатор загрузки для infinite scroll -->
+                    <div class="col-12 text-center py-3 d-none" id="tasksLoader">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Загрузка...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Сообщение об отсутствии результатов поиска -->
+                    <div class="col-12 d-none" id="noTasksFound">
+                        <div class="alert alert-info">
+                            <i class="bi bi-search"></i> Ничего не найдено. Попробуйте изменить запрос.
+                        </div>
+                    </div>
                 <?php endif; ?>
 
                 
                 <?php
-                    $userRole = Auth::user()->getRoleInProject($project);
-                    $isOwner = $userRole && $userRole->role === 'owner';
+                    $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                 ?>
                 <?php if($isOwner): ?>
                     <?php $__currentLoopData = $stage->tasks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $task): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
@@ -647,8 +677,7 @@
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <h6 class="mb-0"><?php echo e($material->name); ?></h6>
                                             <?php
-                                                $userRole = Auth::user()->getRoleInProject($project);
-                                                $isOwner = $userRole && $userRole->role === 'owner';
+                                                $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                                             ?>
                                             <?php if($isOwner): ?>
                                                 <form
@@ -720,8 +749,7 @@
                                         <div class="d-flex justify-content-between align-items-start mb-2">
                                             <h6 class="mb-0"><?php echo e($delivery->name); ?></h6>
                                             <?php
-                                                $userRole = Auth::user()->getRoleInProject($project);
-                                                $isOwner = $userRole && $userRole->role === 'owner';
+                                                $isOwner = $currentUserRole && $currentUserRole->role === 'owner';
                                             ?>
                                             <?php if($isOwner): ?>
                                                 <form
@@ -1208,7 +1236,7 @@
             
             const dynamicBtn = document.getElementById('dynamicCreateBtn');
             const btnText = document.getElementById('btnText');
-            const stageId = '<?php echo e($stage->id); ?>';
+            const stageId = <?php echo json_encode($stage->id, 15, 512) ?>;
             const storageKey = `stage_${stageId}_active_tab`;
             
             if (dynamicBtn && btnText) {
@@ -1340,7 +1368,7 @@
                     const savedModalTab = localStorage.getItem(modalTabStorageKey);
                     
                     // Восстанавливаем модалку только если это та же задача
-                    const taskId = '<?php echo e(session('task_id')); ?>';
+                    const taskId = <?php echo json_encode(session('task_id'), 15, 512) ?>;
                     if (savedModalId && savedModalId.includes(taskId)) {
                         const modalElement = document.getElementById(savedModalId);
                         if (modalElement) {
@@ -1633,9 +1661,16 @@
 
                 function handleFiles(files) {
                     previewGrid.innerHTML = '';
+                    const MAX_FILE_SIZE = 104857600; // 100MB в байтах
 
                     Array.from(files).forEach((file, index) => {
                         if (!file.type.startsWith('image/')) return;
+                        
+                        // Проверка размера файла
+                        if (file.size > MAX_FILE_SIZE) {
+                            alert(`Файл "${file.name}" слишком большой (${(file.size / 1048576).toFixed(2)} МБ). Максимальный размер: 100 МБ.`);
+                            return;
+                        }
 
                         const reader = new FileReader();
 
@@ -1928,6 +1963,155 @@
                     }
                 }
             });
+        }
+
+        // ========================================
+        // Поиск и пагинация задач
+        // ========================================
+        const tasksContainer = document.getElementById('tasksContainer');
+        const tasksSearchInput = document.getElementById('tasksSearchInput');
+        const clearTasksSearch = document.getElementById('clearTasksSearch');
+        const tasksLoader = document.getElementById('tasksLoader');
+        const noTasksFound = document.getElementById('noTasksFound');
+
+        if (tasksContainer) {
+            let tasksPage = 2; // Начинаем со второй страницы, т.к. первая уже загружена на сервере
+            let tasksLoading = false;
+            let tasksHasMore = <?php echo e($totalTasks > 20 ? 'true' : 'false'); ?>; // Есть ли еще задачи для загрузки
+            let tasksSearchQuery = '';
+            let tasksSearchTimeout = null;
+
+            // НЕ загружаем первые задачи - они уже отображены на сервере
+
+            // Поиск с задержкой 800мс
+            if (tasksSearchInput) {
+                tasksSearchInput.addEventListener('input', function() {
+                    clearTimeout(tasksSearchTimeout);
+                    
+                    if (this.value.trim()) {
+                        clearTasksSearch.style.display = 'block';
+                    } else {
+                        clearTasksSearch.style.display = 'none';
+                    }
+                    
+                    tasksSearchTimeout = setTimeout(() => {
+                        tasksSearchQuery = this.value.trim();
+                        tasksPage = 1;
+                        tasksHasMore = true;
+                        tasksContainer.innerHTML = '';
+                        loadTasks();
+                    }, 800);
+                });
+
+                clearTasksSearch.addEventListener('click', function() {
+                    tasksSearchInput.value = '';
+                    this.style.display = 'none';
+                    tasksSearchQuery = '';
+                    // Перезагружаем страницу чтобы восстановить исходные задачи
+                    window.location.reload();
+                });
+            }
+
+            // Infinite scroll
+            const tasksObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !tasksLoading && tasksHasMore) {
+                        loadTasks();
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            if (tasksLoader) {
+                tasksObserver.observe(tasksLoader);
+            }
+
+            async function loadTasks() {
+                if (tasksLoading || !tasksHasMore) return;
+
+                tasksLoading = true;
+                tasksLoader.classList.remove('d-none');
+                noTasksFound.classList.add('d-none');
+
+                try {
+                    const projectId = tasksContainer.dataset.projectId;
+                    const stageId = tasksContainer.dataset.stageId;
+                    const url = `/projects/${projectId}/stages/${stageId}/tasks/search?page=${tasksPage}${tasksSearchQuery ? '&search=' + encodeURIComponent(tasksSearchQuery) : ''}`;
+                    
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    if (data.tasks && data.tasks.length > 0) {
+                        data.tasks.forEach(task => {
+                            tasksContainer.insertAdjacentHTML('beforeend', renderTaskCard(task));
+                        });
+
+                        tasksHasMore = data.has_more;
+                        if (tasksHasMore) {
+                            tasksPage = data.next_page;
+                        }
+                    } else if (tasksPage === 1) {
+                        noTasksFound.classList.remove('d-none');
+                    }
+
+                } catch (error) {
+                    console.error('Ошибка загрузки задач:', error);
+                } finally {
+                    tasksLoading = false;
+                    tasksLoader.classList.add('d-none');
+                }
+            }
+
+            function renderTaskCard(task) {
+                const projectId = tasksContainer.dataset.projectId;
+                const stageId = tasksContainer.dataset.stageId;
+                const photosCount = task.photos_count || 0;
+                const commentsCount = task.comments_count || 0;
+                
+                let statusBadge = '';
+                if (task.status === 'Завершена') {
+                    statusBadge = '<span class="badge bg-success">Завершена</span>';
+                } else if (task.status === 'В работе') {
+                    statusBadge = '<span class="badge bg-primary">В работе</span>';
+                } else if (task.status === 'На проверке') {
+                    statusBadge = '<span class="badge bg-warning">На проверке</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-secondary">Не начата</span>';
+                }
+                
+                return `
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">${escapeHtml(task.name)}</h6>
+                                    ${statusBadge}
+                                </div>
+                                
+                                ${task.description ? `<p class="text-muted small mb-2">${escapeHtml(task.description)}</p>` : ''}
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="text-muted small">
+                                        ${photosCount > 0 ? `<i class="bi bi-image"></i> ${photosCount} ` : ''}
+                                        ${commentsCount > 0 ? `<i class="bi bi-chat"></i> ${commentsCount}` : ''}
+                                    </div>
+                                    ${task.cost ? `<span class="badge bg-light text-dark">${formatCurrency(task.cost)} ₽</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('ru-RU').format(amount);
+            }
         }
     });
     </script>

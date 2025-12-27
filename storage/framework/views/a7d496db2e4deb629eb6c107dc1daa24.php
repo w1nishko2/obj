@@ -103,37 +103,61 @@ unset($__errorArgs, $__bag); ?>
                 </div>
 
                 <div class="form-group-minimal">
-                    <label>Тип работ (необязательно)</label>
-                    <select class="minimal-input" name="work_type" id="workTypeSelect">
-                        <option value="">Выберите тип</option>
-                        <option value="Капитальный ремонт" <?php echo e(old('work_type') == 'Капитальный ремонт' ? 'selected' : ''); ?>>Капитальный ремонт</option>
-                        <option value="Косметический ремонт" <?php echo e(old('work_type') == 'Косметический ремонт' ? 'selected' : ''); ?>>Косметический ремонт</option>
-                        <option value="Строительство" <?php echo e(old('work_type') == 'Строительство' ? 'selected' : ''); ?>>Строительство</option>
-                        <option value="Реконструкция" <?php echo e(old('work_type') == 'Реконструкция' ? 'selected' : ''); ?>>Реконструкция</option>
-                        <option value="Отделочные работы" <?php echo e(old('work_type') == 'Отделочные работы' ? 'selected' : ''); ?>>Отделочные работы</option>
-                        <option value="Электромонтажные работы" <?php echo e(old('work_type') == 'Электромонтажные работы' ? 'selected' : ''); ?>>Электромонтажные работы</option>
-                        <option value="Сантехнические работы" <?php echo e(old('work_type') == 'Сантехнические работы' ? 'selected' : ''); ?>>Сантехнические работы</option>
-                        <option value="Кровельные работы" <?php echo e(old('work_type') == 'Кровельные работы' ? 'selected' : ''); ?>>Кровельные работы</option>
-                        <option value="Фасадные работы" <?php echo e(old('work_type') == 'Фасадные работы' ? 'selected' : ''); ?>>Фасадные работы</option>
-                        <option value="Ландшафтные работы" <?php echo e(old('work_type') == 'Ландшафтные работы' ? 'selected' : ''); ?>>Ландшафтные работы</option>
-                        <option value="Дизайн интерьера" <?php echo e(old('work_type') == 'Дизайн интерьера' ? 'selected' : ''); ?>>Дизайн интерьера</option>
-                        <option value="Другое" <?php echo e(old('work_type') == 'Другое' ? 'selected' : ''); ?>>Другое</option>
+                    <label>Тип работ</label>
+                    <select class="minimal-input" name="template_id" id="templateSelect">
+                        <option value="">Без шаблона (добавить этапы вручную)</option>
+                        <?php if(isset($templates) && $templates->count() > 0): ?>
+                            <?php $__currentLoopData = $templates; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $template): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <option value="<?php echo e($template->id); ?>" <?php echo e(old('template_id') == $template->id ? 'selected' : ''); ?>>
+                                    <?php echo e($template->name); ?>
+
+                                    <?php if($template->description): ?>
+                                        - <?php echo e(Str::limit($template->description, 50)); ?>
+
+                                    <?php endif; ?>
+                                    (<?php echo e($template->stages->count()); ?> этапов)
+                                </option>
+                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php endif; ?>
                     </select>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        При выборе типа работ автоматически создадутся этапы и задачи с ценами и временем.
+                        <a href="<?php echo e(route('prices.index')); ?>" target="_blank">Управление шаблонами</a>
+                    </small>
                 </div>
 
-                <div class="form-group-minimal" id="autoFillContainer" style="display: none;">
-                    <div class="custom-checkbox">
-                        <input type="checkbox" id="useTemplates" name="use_templates" value="1" <?php echo e(old('use_templates', '1') == '1' ? 'checked' : ''); ?>>
-                        <span class="checkbox-indicator"></span>
-                        <label for="useTemplates">
-                            <i class="bi bi-magic"></i>
-                            <strong>Использовать готовые шаблоны этапов</strong>
-                            <span class="help-text">
-                                ✓ <strong>С галочкой:</strong> мы автоматически создадим все типовые этапы с задачами для выбранного типа работ. Вы сможете их отредактировать или удалить лишние.<br>
-                                ✗ <strong>Без галочки:</strong> вы будете добавлять этапы и задачи вручную с нуля.
-                            </span>
-                        </label>
-                    </div>
+                <div class="form-group-minimal">
+                    <label>Наценка на весь проект (%)</label>
+                    <input type="number" 
+                           class="minimal-input <?php $__errorArgs = ['markup_percent'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" 
+                           name="markup_percent" 
+                           value="<?php echo e(old('markup_percent', 0)); ?>" 
+                           placeholder="0"
+                           step="0.01"
+                           min="0"
+                           max="999.99">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Общая наценка будет применена ко всем задачам проекта
+                    </small>
+                    <?php $__errorArgs = ['markup_percent'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                        <div class="error-message"><?php echo e($message); ?></div>
+                    <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                 </div>
             </div>
 
@@ -208,31 +232,14 @@ let participantCount = 0;
 let currentStep = 1;
 let templatesLoaded = false;
 
-// Шаблоны работ
-const workTemplates = <?php echo json_encode(config('work_templates'), 15, 512) ?>;
+// Шаблоны работ из базы данных
+const dbTemplates = <?php echo json_encode($templates ?? [], 15, 512) ?>;
 
-// Отслеживание изменения типа работ
+// Отслеживание изменения типа работ (теперь это template_id)
 document.addEventListener('DOMContentLoaded', function() {
-    const workTypeSelect = document.getElementById('workTypeSelect');
-    const autoFillContainer = document.getElementById('autoFillContainer');
-    const useTemplatesCheckbox = document.getElementById('useTemplates');
+    const templateSelect = document.getElementById('templateSelect');
     
-    workTypeSelect.addEventListener('change', function() {
-        const selectedType = this.value;
-        
-        // Показываем/скрываем чекбокс в зависимости от наличия шаблона
-        if (selectedType && workTemplates[selectedType]) {
-            autoFillContainer.style.display = 'block';
-        } else {
-            autoFillContainer.style.display = 'none';
-            useTemplatesCheckbox.checked = false;
-        }
-    });
-    
-    // Если тип работ уже выбран (при возврате с ошибкой)
-    if (workTypeSelect.value && workTemplates[workTypeSelect.value]) {
-        autoFillContainer.style.display = 'block';
-    }
+    // Ничего не делаем, больше нет автозаполнения checkbox
 });
 
 // Функции управления визардом
@@ -249,11 +256,10 @@ function changeStep(direction) {
     
     // Проверяем, нужно ли загрузить шаблоны при переходе на шаг 2
     if (currentStep === 2 && direction === 1 && !templatesLoaded) {
-        const useTemplates = document.getElementById('useTemplates').checked;
-        const workType = document.getElementById('workTypeSelect').value;
+        const templateId = document.getElementById('templateSelect').value;
         
-        if (useTemplates && workType && workTemplates[workType]) {
-            loadTemplateStages(workType);
+        if (templateId) {
+            loadTemplateStages(templateId);
             templatesLoaded = true;
         }
     }
@@ -427,9 +433,12 @@ function removeParticipant(id) {
 }
 
 // Загрузка шаблонных этапов
-function loadTemplateStages(workType) {
-    const template = workTemplates[workType];
+function loadTemplateStages(templateId) {
+    const template = dbTemplates.find(t => t.id == templateId);
     if (!template || !template.stages) return;
+    
+    console.log('Загружен шаблон:', template);
+    console.log('Этапы шаблона:', template.stages);
     
     const container = document.getElementById('stages-container');
     container.innerHTML = ''; // Очищаем контейнер
@@ -440,12 +449,15 @@ function loadTemplateStages(workType) {
     currentDate.setDate(currentDate.getDate() + 3);
     
     template.stages.forEach((stage, index) => {
+        console.log(`Этап ${index}:`, stage);
+        console.log(`Задачи этапа ${index}:`, stage.tasks);
+        
         stageCount++;
         
         // Вычисляем даты этапа
         const startDate = new Date(currentDate);
         const endDate = new Date(currentDate);
-        endDate.setDate(endDate.getDate() + stage.duration_days - 1);
+        endDate.setDate(endDate.getDate() + (stage.duration_days || 1) - 1);
         
         // Форматируем даты для отображения
         const startDateStr = formatDate(startDate);
@@ -485,7 +497,7 @@ function loadTemplateStages(workType) {
                     <div class="form-group-minimal">
                         <label>Название этапа</label>
                         <input type="text" class="minimal-input" name="stages[${index}][name]" 
-                               value="${stage.name}"
+                               value="${stage.name || ''}"
                                placeholder="Например: Черновая электрика"
                                maxlength="255">
                     </div>

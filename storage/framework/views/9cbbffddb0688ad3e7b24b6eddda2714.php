@@ -38,7 +38,7 @@
             <?php if(Auth::user()->isForeman()): ?>
                 <a href="<?php echo e(route('projects.archived')); ?>" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
-                    Архив
+                    
                 </a>
                 <a href="<?php echo e(route('projects.create')); ?>" class="minimal-btn minimal-btn-primary">
                     <i class="bi bi-plus-lg"></i>
@@ -47,7 +47,7 @@
             <?php else: ?>
                 <a href="<?php echo e(route('projects.archived')); ?>" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
-                    Архив
+                    
                 </a>
             <?php endif; ?>
         </div>
@@ -422,7 +422,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1">
                 <div class="wizard-container text-center" style="max-width: 500px; width: 100%;">
                     <div class="mb-5">
-                        <i class="bi bi-person-badge" style="font-size: 5rem; color: #007bff;"></i>
+                        <i class="bi bi-person-badge" style="font-size: 5rem; color: #a70000;"></i>
                     </div>
                     
                     <div class="d-grid gap-3">

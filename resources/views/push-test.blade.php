@@ -137,12 +137,12 @@
         }
 
         button.success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+            background: linear-gradient(135deg, #a70000 0%, #8b0000 100%);
+            box-shadow: 0 4px 15px rgba(167, 0, 0, 0.4);
         }
 
         button.success:hover {
-            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+            box-shadow: 0 6px 20px rgba(167, 0, 0, 0.6);
         }
 
         .log-container {

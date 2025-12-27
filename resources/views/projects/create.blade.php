@@ -8,9 +8,18 @@
             <div class="subscription-warning-content">
                 <i class="bi bi-info-circle"></i>
                 <div>
-                    <strong>Стартовый тариф "Прораб Старт"</strong>
-                    <p>У вас осталось {{ Auth::user()->getRemainingProjectsCount() }} 
-                    {{ Auth::user()->getRemainingProjectsCount() === 1 ? 'проект' : 'проекта' }} из 2. 
+                    <strong>Текущий тариф: @if(Auth::user()->subscription_type === 'free') Бесплатный (1 проект) @elseif(str_contains(Auth::user()->subscription_type, 'starter')) Стартовый (до 3 проектов) @elseif(str_contains(Auth::user()->subscription_type, 'professional')) Профессиональный (до 10 проектов) @elseif(str_contains(Auth::user()->subscription_type, 'corporate')) Корпоративный (безлимит) @else Не активен @endif</strong>
+                    @php
+                        $remaining = Auth::user()->getRemainingProjectsCount();
+                        $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
+                        $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+                    @endphp
+                    <p>У вас осталось 
+                    @if($remaining === null)
+                        безлимитное количество проектов
+                    @else
+                        {{ $remaining }} {{ $remaining === 1 ? 'проект' : ($remaining > 1 && $remaining < 5 ? 'проекта' : 'проектов') }} из {{ $maxProjects }}
+                    @endif. 
                     <a href="{{ route('pricing.index') }}">Оформите подписку</a> для снятия ограничений.</p>
                 </div>
             </div>
@@ -75,37 +84,45 @@
                 </div>
 
                 <div class="form-group-minimal">
-                    <label>Тип работ (необязательно)</label>
-                    <select class="minimal-input" name="work_type" id="workTypeSelect">
-                        <option value="">Выберите тип</option>
-                        <option value="Капитальный ремонт" {{ old('work_type') == 'Капитальный ремонт' ? 'selected' : '' }}>Капитальный ремонт</option>
-                        <option value="Косметический ремонт" {{ old('work_type') == 'Косметический ремонт' ? 'selected' : '' }}>Косметический ремонт</option>
-                        <option value="Строительство" {{ old('work_type') == 'Строительство' ? 'selected' : '' }}>Строительство</option>
-                        <option value="Реконструкция" {{ old('work_type') == 'Реконструкция' ? 'selected' : '' }}>Реконструкция</option>
-                        <option value="Отделочные работы" {{ old('work_type') == 'Отделочные работы' ? 'selected' : '' }}>Отделочные работы</option>
-                        <option value="Электромонтажные работы" {{ old('work_type') == 'Электромонтажные работы' ? 'selected' : '' }}>Электромонтажные работы</option>
-                        <option value="Сантехнические работы" {{ old('work_type') == 'Сантехнические работы' ? 'selected' : '' }}>Сантехнические работы</option>
-                        <option value="Кровельные работы" {{ old('work_type') == 'Кровельные работы' ? 'selected' : '' }}>Кровельные работы</option>
-                        <option value="Фасадные работы" {{ old('work_type') == 'Фасадные работы' ? 'selected' : '' }}>Фасадные работы</option>
-                        <option value="Ландшафтные работы" {{ old('work_type') == 'Ландшафтные работы' ? 'selected' : '' }}>Ландшафтные работы</option>
-                        <option value="Дизайн интерьера" {{ old('work_type') == 'Дизайн интерьера' ? 'selected' : '' }}>Дизайн интерьера</option>
-                        <option value="Другое" {{ old('work_type') == 'Другое' ? 'selected' : '' }}>Другое</option>
+                    <label>Тип работ</label>
+                    <select class="minimal-input" name="template_id" id="templateSelect">
+                        <option value="">Без шаблона (добавить этапы вручную)</option>
+                        @if(isset($templates) && $templates->count() > 0)
+                            @foreach($templates as $template)
+                                <option value="{{ $template->id }}" {{ old('template_id') == $template->id ? 'selected' : '' }}>
+                                    {{ $template->name }}
+                                    @if($template->description)
+                                        - {{ Str::limit($template->description, 50) }}
+                                    @endif
+                                    ({{ $template->stages->count() }} этапов)
+                                </option>
+                            @endforeach
+                        @endif
                     </select>
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        При выборе типа работ автоматически создадутся этапы и задачи с ценами и временем.
+                        <a href="{{ route('prices.index') }}" target="_blank">Управление шаблонами</a>
+                    </small>
                 </div>
 
-                <div class="form-group-minimal" id="autoFillContainer" style="display: none;">
-                    <div class="custom-checkbox">
-                        <input type="checkbox" id="useTemplates" name="use_templates" value="1" {{ old('use_templates', '1') == '1' ? 'checked' : '' }}>
-                        <span class="checkbox-indicator"></span>
-                        <label for="useTemplates">
-                            <i class="bi bi-magic"></i>
-                            <strong>Использовать готовые шаблоны этапов</strong>
-                            <span class="help-text">
-                                ✓ <strong>С галочкой:</strong> мы автоматически создадим все типовые этапы с задачами для выбранного типа работ. Вы сможете их отредактировать или удалить лишние.<br>
-                                ✗ <strong>Без галочки:</strong> вы будете добавлять этапы и задачи вручную с нуля.
-                            </span>
-                        </label>
-                    </div>
+                <div class="form-group-minimal">
+                    <label>Наценка на весь проект (%)</label>
+                    <input type="number" 
+                           class="minimal-input @error('markup_percent') is-invalid @enderror" 
+                           name="markup_percent" 
+                           value="{{ old('markup_percent', 0) }}" 
+                           placeholder="0"
+                           step="0.01"
+                           min="0"
+                           max="999.99">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        Общая наценка будет применена ко всем задачам проекта
+                    </small>
+                    @error('markup_percent')
+                        <div class="error-message">{{ $message }}</div>
+                    @enderror
                 </div>
             </div>
 
@@ -180,31 +197,14 @@ let participantCount = 0;
 let currentStep = 1;
 let templatesLoaded = false;
 
-// Шаблоны работ
-const workTemplates = @json(config('work_templates'));
+// Шаблоны работ из базы данных
+const dbTemplates = @json($templates ?? []);
 
-// Отслеживание изменения типа работ
+// Отслеживание изменения типа работ (теперь это template_id)
 document.addEventListener('DOMContentLoaded', function() {
-    const workTypeSelect = document.getElementById('workTypeSelect');
-    const autoFillContainer = document.getElementById('autoFillContainer');
-    const useTemplatesCheckbox = document.getElementById('useTemplates');
+    const templateSelect = document.getElementById('templateSelect');
     
-    workTypeSelect.addEventListener('change', function() {
-        const selectedType = this.value;
-        
-        // Показываем/скрываем чекбокс в зависимости от наличия шаблона
-        if (selectedType && workTemplates[selectedType]) {
-            autoFillContainer.style.display = 'block';
-        } else {
-            autoFillContainer.style.display = 'none';
-            useTemplatesCheckbox.checked = false;
-        }
-    });
-    
-    // Если тип работ уже выбран (при возврате с ошибкой)
-    if (workTypeSelect.value && workTemplates[workTypeSelect.value]) {
-        autoFillContainer.style.display = 'block';
-    }
+    // Ничего не делаем, больше нет автозаполнения checkbox
 });
 
 // Функции управления визардом
@@ -221,11 +221,10 @@ function changeStep(direction) {
     
     // Проверяем, нужно ли загрузить шаблоны при переходе на шаг 2
     if (currentStep === 2 && direction === 1 && !templatesLoaded) {
-        const useTemplates = document.getElementById('useTemplates').checked;
-        const workType = document.getElementById('workTypeSelect').value;
+        const templateId = document.getElementById('templateSelect').value;
         
-        if (useTemplates && workType && workTemplates[workType]) {
-            loadTemplateStages(workType);
+        if (templateId) {
+            loadTemplateStages(templateId);
             templatesLoaded = true;
         }
     }
@@ -399,9 +398,12 @@ function removeParticipant(id) {
 }
 
 // Загрузка шаблонных этапов
-function loadTemplateStages(workType) {
-    const template = workTemplates[workType];
+function loadTemplateStages(templateId) {
+    const template = dbTemplates.find(t => t.id == templateId);
     if (!template || !template.stages) return;
+    
+    console.log('Загружен шаблон:', template);
+    console.log('Этапы шаблона:', template.stages);
     
     const container = document.getElementById('stages-container');
     container.innerHTML = ''; // Очищаем контейнер
@@ -412,12 +414,15 @@ function loadTemplateStages(workType) {
     currentDate.setDate(currentDate.getDate() + 3);
     
     template.stages.forEach((stage, index) => {
+        console.log(`Этап ${index}:`, stage);
+        console.log(`Задачи этапа ${index}:`, stage.tasks);
+        
         stageCount++;
         
         // Вычисляем даты этапа
         const startDate = new Date(currentDate);
         const endDate = new Date(currentDate);
-        endDate.setDate(endDate.getDate() + stage.duration_days - 1);
+        endDate.setDate(endDate.getDate() + (stage.duration_days || 1) - 1);
         
         // Форматируем даты для отображения
         const startDateStr = formatDate(startDate);
@@ -457,7 +462,7 @@ function loadTemplateStages(workType) {
                     <div class="form-group-minimal">
                         <label>Название этапа</label>
                         <input type="text" class="minimal-input" name="stages[${index}][name]" 
-                               value="${stage.name}"
+                               value="${stage.name || ''}"
                                placeholder="Например: Черновая электрика"
                                maxlength="255">
                     </div>
