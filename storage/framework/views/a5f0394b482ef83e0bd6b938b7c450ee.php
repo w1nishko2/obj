@@ -51,7 +51,7 @@
                             ['text' => 'Генерация смет (PDF/Excel)', 'available' => true, 'highlight' => true],
                             ['text' => 'Генерация договоров и актов', 'available' => true, 'highlight' => true],
                             ['text' => 'Push-уведомления', 'available' => true],
-                            ['text' => 'Архивирование проектов', 'available' => false],
+                            ['text' => 'Архивирование проектов', 'available' => true],
                         ],
                     ],
                     'professional' => [
@@ -238,7 +238,7 @@
                         <tr>
                             <td><strong>Архивирование проектов</strong></td>
                             <td class="text-center"><i class="bi bi-x-circle-fill text-danger"></i></td>
-                            <td class="text-center"><i class="bi bi-x-circle-fill text-danger"></i></td>
+                            <td class="text-center"><i class="bi bi-check-circle-fill text-success"></i></td>
                             <td class="text-center bg-light"><i class="bi bi-check-circle-fill text-success"></i></td>
                             <td class="text-center"><i class="bi bi-check-circle-fill text-success"></i></td>
                         </tr>
