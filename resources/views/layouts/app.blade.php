@@ -127,6 +127,12 @@
                                 Реквизиты
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" href="https://t.me/objectplus" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-telegram"></i>
+                                Поддержка в Telegram
+                            </a>
+                        </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" href="{{ route('logout') }}"
