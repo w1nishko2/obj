@@ -47,6 +47,10 @@
         <h1>Проекты</h1>
         <div style="display: flex; gap: 0.5rem;">
             @if(Auth::user()->isForeman())
+                <a href="{{ route('employees.index') }}" class="minimal-btn minimal-btn-ghost">
+                    <i class="bi bi-people"></i>
+                    
+                </a>
                 <a href="{{ route('projects.archived') }}" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
                     
@@ -56,6 +60,10 @@
                     Проект
                 </a>
             @else
+                <a href="{{ route('employees.index') }}" class="minimal-btn minimal-btn-ghost">
+                    <i class="bi bi-people"></i>
+                    
+                </a>
                 <a href="{{ route('projects.archived') }}" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
                     

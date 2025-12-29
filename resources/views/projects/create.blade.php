@@ -372,8 +372,16 @@ function addParticipant() {
             </div>
             <div class="minimal-card-body">
                 <div class="form-group-minimal">
+                    <label>Выбрать из моих сотрудников</label>
+                    <select class="minimal-input employee-select" data-participant="${participantCount}" onchange="fillParticipantData(this, ${participantCount})">
+                        <option value="">— Выбрать сотрудника —</option>
+                    </select>
+                    <small class="text-muted">Или заполните данные вручную ниже</small>
+                </div>
+
+                <div class="form-group-minimal">
                     <label>Роль</label>
-                    <select class="minimal-input" name="participants[${participantCount - 1}][role]">
+                    <select class="minimal-input" name="participants[${participantCount - 1}][role]" id="role${participantCount}">
                         <option value="">Выберите роль</option>
                         <option value="Клиент">Клиент</option>
                         <option value="Исполнитель">Исполнитель</option>
@@ -383,6 +391,7 @@ function addParticipant() {
                 <div class="form-group-minimal">
                     <label>Имя</label>
                     <input type="text" class="minimal-input" name="participants[${participantCount - 1}][name]" 
+                           id="name${participantCount}"
                            placeholder="Иван Петров"
                            maxlength="255">
                 </div>
@@ -406,6 +415,9 @@ function addParticipant() {
         lazy: false,
         placeholderChar: '_'
     });
+
+    // Загружаем сотрудников в новый select
+    loadEmployeesForNewParticipant(participantCount);
 }
 
 function removeParticipant(id) {
@@ -765,4 +777,44 @@ function formatDateForInput(date) {
     }
 }
 </style>
+
+<script>
+// Загрузка сотрудников при загрузке страницы
+let employeesData = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Загружаем список сотрудников
+    fetch('/employees-json')
+        .then(response => response.json())
+        .then(employees => {
+            employeesData = employees;
+        })
+        .catch(error => console.error('Ошибка загрузки сотрудников:', error));
+});
+
+// Функция для загрузки сотрудников в новый select участника
+function loadEmployeesForNewParticipant(participantId) {
+    const select = document.querySelector(`.employee-select[data-participant="${participantId}"]`);
+    if (select && employeesData.length > 0) {
+        employeesData.forEach(employee => {
+            const option = document.createElement('option');
+            option.value = JSON.stringify({
+                name: employee.name,
+                phone: employee.phone
+            });
+            option.textContent = `${employee.name} — ${employee.phone}`;
+            select.appendChild(option);
+        });
+    }
+}
+
+// Функция для заполнения данных участника из выбранного сотрудника
+function fillParticipantData(select, participantId) {
+    if (select.value) {
+        const data = JSON.parse(select.value);
+        document.getElementById(`name${participantId}`).value = data.name;
+        document.getElementById(`phone${participantId}`).value = data.phone;
+    }
+}
+</script>
 @endsection

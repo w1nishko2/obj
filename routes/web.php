@@ -74,6 +74,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/prices/tasks/{task}', [App\Http\Controllers\PriceTemplateController::class, 'updateTask'])->name('prices.tasks.update');
     Route::delete('/prices/tasks/{task}', [App\Http\Controllers\PriceTemplateController::class, 'deleteTask'])->name('prices.tasks.delete');
     
+    // Сотрудники
+    Route::resource('employees', App\Http\Controllers\EmployeeController::class);
+    Route::get('/employees-json', [App\Http\Controllers\EmployeeController::class, 'getEmployees'])->name('employees.json');
+    
     // Проекты
     Route::resource('projects', App\Http\Controllers\ProjectController::class);
     Route::get('/projects-archived', [App\Http\Controllers\ProjectController::class, 'archived'])->name('projects.archived');

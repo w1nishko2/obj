@@ -164,7 +164,7 @@ p {
     border-radius: 50%;
     background: #000000;
     color: white;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
@@ -277,7 +277,7 @@ p {
 .minimal-btn-primary {
     background: #000000;
     color: white;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
 }
 
 .minimal-btn-primary:hover {
@@ -291,7 +291,7 @@ p {
 .minimal-btn-ghost {
     background: transparent;
     color: #000000;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
 }
 
 .minimal-btn-ghost:hover {
@@ -332,7 +332,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
 }
 
 .minimal-header h1 {
@@ -353,7 +353,7 @@ p {
 
 .project-card {
     background: #ffffff;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius);
     padding: 1.5rem;
     text-decoration: none;
@@ -760,7 +760,7 @@ p {
 
 .project-header-minimal {
     background: #ffffff;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius);
     padding: 2rem;
     margin-bottom: 1.5rem;
@@ -911,7 +911,7 @@ p {
 
 .stage-item-minimal {
     background: #ffffff;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius);
     padding: 1.5rem;
     text-decoration: none;
@@ -1010,7 +1010,7 @@ p {
     gap: 1rem;
     padding: 1rem 1.25rem;
     background: #ffffff;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius);
     transition: all 0.2s;
 }
@@ -1031,7 +1031,7 @@ p {
     font-weight: 700;
     font-size: 1.125rem;
     flex-shrink: 0;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
 }
 
 .participant-info {
@@ -1335,7 +1335,7 @@ p {
    ======================================== */
 
 .flatpickr-calendar {
-    border: 2px solid #000000 !important;
+    border: 2px solid #d4d4d4 !important;
     border-radius: 8px !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
     font-family: inherit !important;
@@ -1412,7 +1412,7 @@ p {
 
 .settings-section {
     background: #ffffff;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius);
     margin-bottom: 1.5rem;
     overflow: hidden;
@@ -1421,7 +1421,7 @@ p {
 .settings-section-header {
     padding: 1.25rem 1.5rem;
     background: #f9fafb;
-    border-bottom: 2px solid #000000;
+    border-bottom: 2px solid #d4d4d4;
 }
 
 .settings-section-header h3 {
@@ -1461,7 +1461,7 @@ p {
 .minimal-textarea {
     width: 100%;
     padding: 0.625rem 0.875rem;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius-sm);
     font-size: 0.9375rem;
     line-height: 1.5;
@@ -1498,7 +1498,7 @@ p {
 
 .minimal-alert {
     padding: 1rem 1.25rem;
-    border: 2px solid #000000;
+    border: 2px solid #d4d4d4;
     border-radius: var(--radius);
     background: #f0fdf4;
     color: #000000;

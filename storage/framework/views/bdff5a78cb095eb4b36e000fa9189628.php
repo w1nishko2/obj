@@ -50,6 +50,10 @@
         <h1>Проекты</h1>
         <div style="display: flex; gap: 0.5rem;">
             <?php if(Auth::user()->isForeman()): ?>
+                <a href="<?php echo e(route('employees.index')); ?>" class="minimal-btn minimal-btn-ghost">
+                    <i class="bi bi-people"></i>
+                    
+                </a>
                 <a href="<?php echo e(route('projects.archived')); ?>" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
                     
@@ -59,6 +63,10 @@
                     Проект
                 </a>
             <?php else: ?>
+                <a href="<?php echo e(route('employees.index')); ?>" class="minimal-btn minimal-btn-ghost">
+                    <i class="bi bi-people"></i>
+                    
+                </a>
                 <a href="<?php echo e(route('projects.archived')); ?>" class="minimal-btn minimal-btn-ghost">
                     <i class="bi bi-archive"></i>
                     

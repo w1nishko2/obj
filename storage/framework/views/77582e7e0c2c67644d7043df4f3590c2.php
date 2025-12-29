@@ -682,6 +682,16 @@
                 </div>
                 <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1">
                     <div class="wizard-container" style="max-width: 600px; width: 100%;">
+                    
+                    <!-- Быстрый выбор из сотрудников -->
+                    <div class="form-group-minimal">
+                        <label>Выбрать из моих сотрудников</label>
+                        <select class="minimal-input" id="employeeSelect" onchange="fillEmployeeData(this)">
+                            <option value="">— Выбрать сотрудника —</option>
+                        </select>
+                        <small class="text-muted">Или заполните данные вручную ниже</small>
+                    </div>
+
                     <div class="form-group-minimal">
                         <label>Роль</label>
                         <select class="minimal-input" id="role" name="role" required>
@@ -920,6 +930,40 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ========================================
+    // ЗАГРУЗКА СОТРУДНИКОВ ДЛЯ ВЫБОРА
+    // ========================================
+    loadEmployeesForSelect();
+    
+    function loadEmployeesForSelect() {
+        fetch('/employees-json')
+            .then(response => response.json())
+            .then(employees => {
+                const employeeSelect = document.getElementById('employeeSelect');
+                if (employeeSelect && employees.length > 0) {
+                    employees.forEach(employee => {
+                        const option = document.createElement('option');
+                        option.value = JSON.stringify({
+                            name: employee.name,
+                            phone: employee.phone
+                        });
+                        option.textContent = `${employee.name} — ${employee.phone}`;
+                        employeeSelect.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => console.error('Ошибка загрузки сотрудников:', error));
+    }
+    
+    // Функция для заполнения данных из выбранного сотрудника
+    window.fillEmployeeData = function(select) {
+        if (select.value) {
+            const data = JSON.parse(select.value);
+            document.getElementById('name').value = data.name;
+            document.getElementById('participant_phone').value = data.phone;
+        }
+    };
+
     // ========================================
     // AJAX ОБНОВЛЕНИЕ СТАТУСОВ ЭТАПОВ
     // ========================================

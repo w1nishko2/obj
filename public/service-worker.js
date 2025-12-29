@@ -1,8 +1,6 @@
-const CACHE_NAME = 'obekt-plus-v7';
+const CACHE_NAME = 'obekt-plus-v8';
 const urlsToCache = [
-  '/offline.html',
-  '/css/minimal.css',
-  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css'
+  '/offline.html'
 ];
 
 // Установка Service Worker
@@ -12,10 +10,11 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[Service Worker] Caching basic resources');
-        return cache.addAll(urlsToCache);
-      })
-      .catch((error) => {
-        console.error('[Service Worker] Cache failed:', error);
+        // Кэшируем только offline.html при установке
+        return cache.addAll(urlsToCache).catch((error) => {
+          console.error('[Service Worker] Failed to cache resources:', error);
+          // Продолжаем установку даже если кэширование не удалось
+        });
       })
   );
   self.skipWaiting();
@@ -51,6 +50,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Игнорируем range requests (partial content)
+  if (event.request.headers.get('range')) {
+    return;
+  }
+
   const url = new URL(event.request.url);
   
   // Игнорируем Vite dev server
@@ -72,14 +76,24 @@ self.addEventListener('fetch', (event) => {
 
   // Network First для всех запросов
   event.respondWith(
-    fetch(event.request)
+    fetch(event.request.clone())
       .then((response) => {
-        // Кешируем успешные ответы
-        if (response && response.ok) {
-          const responseToCache = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+        // Кешируем только полные успешные ответы
+        if (response && response.status === 200 && response.type !== 'opaque') {
+          // Не кешируем видео, аудио и большие файлы
+          const contentType = response.headers.get('content-type') || '';
+          const isMediaFile = contentType.includes('video') || 
+                            contentType.includes('audio') ||
+                            url.pathname.match(/\.(mp4|webm|ogg|mp3|wav|avi|mov)$/i);
+          
+          if (!isMediaFile) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache).catch((error) => {
+                console.warn('[Service Worker] Cache put failed:', error.message);
+              });
+            });
+          }
         }
         return response;
       })
