@@ -62,6 +62,12 @@
 
                 </a>
                 
+                <!-- Offline Indicator -->
+                <div id="offline-indicator" class="offline-indicator" style="display: none;">
+                    <i class="bi bi-wifi-off"></i>
+                    <span>Офлайн</span>
+                </div>
+                
                 <?php if(auth()->guard()->check()): ?>
                 <div class="minimal-user-menu">
                     <button class="user-avatar" 
@@ -88,6 +94,14 @@
                                 Профиль
                             </a>
                         </li>
+                        <?php if(Auth::user()->isAdmin()): ?>
+                        <li>
+                            <a class="dropdown-item" href="<?php echo e(route('admin.index')); ?>">
+                                <i class="bi bi-speedometer2"></i>
+                                Админ-панель
+                            </a>
+                        </li>
+                        <?php endif; ?>
                         <?php if(Auth::user()->isForeman()): ?>
                         <li>
                             <a class="dropdown-item" href="<?php echo e(route('prices.index')); ?>">
@@ -127,6 +141,12 @@
                             <a class="dropdown-item" href="<?php echo e(route('requisites')); ?>">
                                 <i class="bi bi-bank"></i>
                                 Реквизиты
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="https://t.me/objectplus" target="_blank" rel="noopener noreferrer">
+                                <i class="bi bi-telegram"></i>
+                                Поддержка в Telegram
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
@@ -491,8 +511,30 @@
                     });
                 }
             }
+
+            // Offline/Online indicator
+            const offlineIndicator = document.getElementById('offline-indicator');
+            
+            function updateOnlineStatus() {
+                if (!navigator.onLine) {
+                    offlineIndicator.style.display = 'flex';
+                } else {
+                    offlineIndicator.style.display = 'none';
+                }
+            }
+            
+            // Проверяем статус при загрузке
+            updateOnlineStatus();
+            
+            // Слушаем изменения статуса
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
         });
         </script>
+
+        <!-- Offline Manager and Data Sync -->
+        <script src="/js/offline-manager.js"></script>
+        <script src="/js/data-sync.js"></script>
         <?php endif; ?>
     <?php endif; ?>
 </body>

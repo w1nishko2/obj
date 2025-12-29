@@ -1,10 +1,10 @@
 <!-- Модальное окно для запроса разрешений -->
 <div id="permissionsModal" class="modal fade" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content permissions-modal-content">
+            <div class="modal-header permissions-modal-header">
                 <h5 class="modal-title">
-                    <i class="bi bi-bell me-2"></i>Включить уведомления
+                    <i class="bi bi-bell-fill me-2"></i>Включить уведомления
                 </h5>
             </div>
 
@@ -13,20 +13,20 @@
                     Получайте уведомления о новых задачах, комментариях и обновлениях проектов.
                 </p>
 
-                <div class="alert alert-info mb-0">
-                    <i class="bi bi-info-circle me-2"></i>
-                    Уведомления приходят даже когда браузер закрыт.
+                <div class="alert alert-light border permissions-alert">
+                    <i class="bi bi-info-circle me-2 text-secondary"></i>
+                    <span>Уведомления приходят даже когда браузер закрыт.</span>
                 </div>
 
                 <div id="permissionStatus" class="mt-3"></div>
             </div>
 
-            <div class="modal-footer">
-                <button type="button" id="skipPermissionsBtn" class="btn btn-secondary" data-bs-dismiss="modal">
+            <div class="modal-footer border-0 permissions-modal-footer">
+                <button type="button" id="skipPermissionsBtn" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                     Позже
                 </button>
-                <button type="button" id="allowPermissionsBtn" class="btn btn-primary">
-                    <i class="bi bi-check-circle me-1"></i> Включить
+                <button type="button" id="allowPermissionsBtn" class="btn btn-permissions-primary">
+                    <i class="bi bi-check-circle-fill me-1"></i> Включить
                 </button>
             </div>
         </div>
@@ -34,8 +34,73 @@
 </div>
 
 <style>
-    #permissionsModal .modal-content {
+    .permissions-modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .permissions-modal-header {
+        border-bottom: 1px solid #e0e0e0;
+        padding: 20px 24px;
+    }
+
+    .permissions-modal-header .modal-title {
+        font-weight: 600;
+        font-size: 18px;
+        color: #0a0a0a;
+    }
+
+    .permissions-modal-header .modal-title i {
+        color: #6ba97f;
+    }
+
+    .permissions-modal-footer {
+        padding: 16px 24px;
+        gap: 12px;
+    }
+
+    .permissions-alert {
+        background: #f8f9fa;
+        border-color: #e0e0e0 !important;
+        color: #4a4a4a;
         border-radius: 8px;
+        padding: 12px 16px;
+    }
+
+    .btn-permissions-primary {
+        background: linear-gradient(135deg, #6ba97f 0%, #5a9170 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-permissions-primary:hover {
+        background: linear-gradient(135deg, #5a9170 0%, #498862 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(107, 169, 127, 0.3);
+    }
+
+    .btn-permissions-primary:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
+
+    .btn-outline-secondary {
+        border-color: #e0e0e0;
+        color: #4a4a4a;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #f8f9fa;
+        border-color: #d0d0d0;
+        color: #0a0a0a;
     }
 </style>
 

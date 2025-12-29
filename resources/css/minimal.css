@@ -105,6 +105,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
 }
 
 .minimal-logo {
@@ -124,6 +125,33 @@ p {
 
 .minimal-logo i {
     font-size: 1.25rem;
+}
+
+/* Offline Indicator */
+.offline-indicator {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #f59e0b;
+    color: white;
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+.offline-indicator i {
+    font-size: 1.1rem;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
 }
 
 .minimal-user-menu {
@@ -162,6 +190,22 @@ p {
     box-shadow: var(--shadow-lg);
     margin-top: 0.5rem !important;
     padding: 0.5rem 0;
+    transform-origin: top right;
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.minimal-dropdown:not(.show) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none;
+    transform: translateX(20px) scale(0.95);
+}
+
+.minimal-dropdown.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateX(0) scale(1);
 }
 
 .minimal-dropdown .dropdown-header {

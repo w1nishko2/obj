@@ -1784,47 +1784,154 @@ console.log('Поиск этапов - элементы:', {
     noStagesFound: !!noStagesFound
 });
 
-if (stagesContainer) {
-    let stagesPage = 2; // Начинаем со второй страницы, т.к. первая уже загружена на сервере
-    let stagesLoading = false;
-    let stagesHasMore = <?php echo e($totalStages > 12 ? 'true' : 'false'); ?>; // Есть ли еще этапы для загрузки
-    let stagesSearchQuery = '';
-    let stagesSearchTimeout = null;
+// Глобальные переменные для поиска этапов
+let stagesPage = 2;
+let stagesLoading = false;
+let stagesHasMore = <?php echo e($totalStages > 12 ? 'true' : 'false'); ?>;
+let stagesSearchQuery = '';
+let stagesSearchTimeout = null;
 
-    // НЕ загружаем первые этапы - они уже отображены на сервере
+// Функция загрузки этапов
+async function loadStages() {
+    if (stagesLoading || !stagesHasMore || !stagesContainer) return;
 
-    // Поиск с задержкой 800мс
-    if (stagesSearchInput) {
-        console.log('Инициализация поиска этапов');
-        stagesSearchInput.addEventListener('input', function() {
-            console.log('Ввод в поиск этапов:', this.value);
-            clearTimeout(stagesSearchTimeout);
-            
-            if (this.value.trim()) {
-                clearStagesSearch.style.display = 'block';
-            } else {
-                clearStagesSearch.style.display = 'none';
+    console.log('loadStages вызвана. Page:', stagesPage, 'Query:', stagesSearchQuery);
+    
+    stagesLoading = true;
+    if (stagesLoader) stagesLoader.classList.remove('d-none');
+    if (noStagesFound) noStagesFound.classList.add('d-none');
+
+    try {
+        const projectId = stagesContainer.dataset.projectId;
+        const url = `/projects/${projectId}/search-stages?page=${stagesPage}${stagesSearchQuery ? '&search=' + encodeURIComponent(stagesSearchQuery) : ''}`;
+        
+        console.log('Запрос к URL:', url);
+        
+        const response = await fetch(url);
+        const data = await response.json();
+
+        console.log('Ответ от сервера:', data);
+
+        if (data.stages && data.stages.length > 0) {
+            data.stages.forEach(stage => {
+                stagesContainer.insertAdjacentHTML('beforeend', renderStageCard(stage));
+            });
+
+            stagesHasMore = data.has_more;
+            if (stagesHasMore) {
+                stagesPage = data.next_page;
             }
-            
-            stagesSearchTimeout = setTimeout(() => {
-                stagesSearchQuery = this.value.trim();
-                console.log('Запуск поиска этапов с запросом:', stagesSearchQuery);
-                stagesPage = 1; // Начинаем с первой страницы
-                stagesHasMore = true;
-                stagesContainer.innerHTML = ''; // Очищаем контейнер
-                loadStages(); // Загружаем результаты поиска
-            }, 800);
-        });
+        } else if (stagesPage === 1) {
+            console.log('Результаты поиска пусты');
+            if (noStagesFound) noStagesFound.classList.remove('d-none');
+        }
 
-        clearStagesSearch.addEventListener('click', function() {
-            stagesSearchInput.value = '';
-            this.style.display = 'none';
-            stagesSearchQuery = '';
-            // Перезагружаем страницу чтобы восстановить исходные этапы
-            window.location.reload();
-        });
+    } catch (error) {
+        console.error('Ошибка загрузки этапов:', error);
+    } finally {
+        stagesLoading = false;
+        if (stagesLoader) stagesLoader.classList.add('d-none');
     }
+}
 
+function renderStageCard(stage) {
+    const projectId = stagesContainer.dataset.projectId;
+    const tasksCount = stage.tasks_count || 0;
+    const totalCost = stage.total_cost || 0;
+    
+    return `
+        <div class="col-md-6 mb-3">
+            <div class="card stage-card position-relative" 
+                 style="cursor: pointer;" 
+                 onclick="window.location.href='/projects/${projectId}/stages/${stage.id}'">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">${escapeHtml(stage.name)}</h5>
+                        ${tasksCount > 0 ? `<span class="badge bg-info">${tasksCount} задач</span>` : ''}
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <p class="mb-0">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> 
+                                ${formatDate(stage.start_date)} - ${formatDate(stage.end_date)}
+                            </small>
+                        </p>
+                        
+                        ${totalCost > 0 ? `
+                            <span class="badge bg-light text-dark">
+                                <i class="bi bi-currency-dollar"></i> ${formatCurrency(totalCost)} ₽
+                            </span>
+                        ` : ''}
+                    </div>
+                    
+                    ${stage.status === 'Готово' ? `
+                        <div class="alert alert-success mb-0 py-2">
+                            <i class="bi bi-check-circle"></i> Этап завершен
+                        </div>
+                    ` : stage.status === 'В работе' ? `
+                        <div class="alert alert-primary mb-0 py-2">
+                            <i class="bi bi-hourglass-split"></i> В процессе выполнения
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ru-RU');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('ru-RU').format(amount);
+}
+
+// Инициализация поиска этапов
+if (stagesSearchInput) {
+    console.log('Инициализация поиска этапов');
+    stagesSearchInput.addEventListener('input', function() {
+        console.log('Ввод в поиск этапов:', this.value);
+        clearTimeout(stagesSearchTimeout);
+        
+        if (this.value.trim()) {
+            if (clearStagesSearch) clearStagesSearch.style.display = 'block';
+        } else {
+            if (clearStagesSearch) clearStagesSearch.style.display = 'none';
+        }
+        
+        stagesSearchTimeout = setTimeout(() => {
+            stagesSearchQuery = this.value.trim();
+            console.log('Запуск поиска этапов с запросом:', stagesSearchQuery);
+            stagesPage = 1;
+            stagesHasMore = true;
+            if (stagesContainer) {
+                stagesContainer.innerHTML = '';
+                loadStages();
+            }
+        }, 800);
+    });
+}
+
+if (clearStagesSearch) {
+    clearStagesSearch.addEventListener('click', function() {
+        if (stagesSearchInput) stagesSearchInput.value = '';
+        this.style.display = 'none';
+        stagesSearchQuery = '';
+        window.location.reload();
+    });
+}
+
+if (stagesContainer) {
+if (stagesContainer) {
     // Infinite scroll
     const stagesObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -1836,109 +1943,6 @@ if (stagesContainer) {
 
     if (stagesLoader) {
         stagesObserver.observe(stagesLoader);
-    }
-
-    async function loadStages() {
-        if (stagesLoading || !stagesHasMore) return;
-
-        console.log('loadStages вызвана. Page:', stagesPage, 'Query:', stagesSearchQuery);
-        
-        stagesLoading = true;
-        stagesLoader.classList.remove('d-none');
-        noStagesFound.classList.add('d-none');
-
-        try {
-            const projectId = stagesContainer.dataset.projectId;
-            const url = `/projects/${projectId}/search-stages?page=${stagesPage}${stagesSearchQuery ? '&search=' + encodeURIComponent(stagesSearchQuery) : ''}`;
-            
-            console.log('Запрос к URL:', url);
-            
-            const response = await fetch(url);
-            const data = await response.json();
-
-            console.log('Ответ от сервера:', data);
-
-            if (data.stages && data.stages.length > 0) {
-                data.stages.forEach(stage => {
-                    stagesContainer.insertAdjacentHTML('beforeend', renderStageCard(stage));
-                });
-
-                stagesHasMore = data.has_more;
-                if (stagesHasMore) {
-                    stagesPage = data.next_page;
-                }
-            } else if (stagesPage === 1) {
-                console.log('Результаты поиска пусты');
-                noStagesFound.classList.remove('d-none');
-            }
-
-        } catch (error) {
-            console.error('Ошибка загрузки этапов:', error);
-        } finally {
-            stagesLoading = false;
-            stagesLoader.classList.add('d-none');
-        }
-    }
-
-    function renderStageCard(stage) {
-        const projectId = stagesContainer.dataset.projectId;
-        const tasksCount = stage.tasks_count || 0;
-        const totalCost = stage.total_cost || 0;
-        
-        return `
-            <div class="col-md-6 mb-3">
-                <div class="card stage-card position-relative" 
-                     style="cursor: pointer;" 
-                     onclick="window.location.href='/projects/${projectId}/stages/${stage.id}'">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">${escapeHtml(stage.name)}</h5>
-                            ${tasksCount > 0 ? `<span class="badge bg-info">${tasksCount} задач</span>` : ''}
-                        </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <p class="mb-0">
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar"></i> 
-                                    ${formatDate(stage.start_date)} - ${formatDate(stage.end_date)}
-                                </small>
-                            </p>
-                            
-                            ${totalCost > 0 ? `
-                                <span class="badge bg-light text-dark">
-                                    <i class="bi bi-currency-dollar"></i> ${formatCurrency(totalCost)} ₽
-                                </span>
-                            ` : ''}
-                        </div>
-                        
-                        ${stage.status === 'Готово' ? `
-                            <div class="alert alert-success mb-0 py-2">
-                                <i class="bi bi-check-circle"></i> Этап завершен
-                            </div>
-                        ` : stage.status === 'В работе' ? `
-                            <div class="alert alert-primary mb-0 py-2">
-                                <i class="bi bi-hourglass-split"></i> В процессе выполнения
-                            </div>
-                        ` : ''}
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function formatDate(dateString) {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU');
-    }
-
-    function formatCurrency(amount) {
-        return new Intl.NumberFormat('ru-RU').format(amount);
     }
 }
 

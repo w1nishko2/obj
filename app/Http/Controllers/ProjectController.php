@@ -71,8 +71,17 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('=== Начало создания проекта ===', [
+            'user_id' => Auth::id(),
+            'request_data' => $request->all()
+        ]);
+
         // Только прорабы могут создавать проекты
         if (!Auth::user()->isForeman()) {
+            Log::warning('Попытка создания проекта не прорабом', [
+                'user_id' => Auth::id(),
+                'account_type' => Auth::user()->account_type
+            ]);
             return redirect()->route('pricing.index')
                 ->with('error', 'Для создания проектов необходимо активировать тариф Прораба.');
         }
@@ -81,7 +90,18 @@ class ProjectController extends Controller
         if (!Auth::user()->canCreateProjects()) {
             $user = Auth::user();
             $plan = \App\Models\Plan::where('slug', $user->subscription_type)->first();
-            $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+            // Правильно обрабатываем null (безлимит)
+            $maxProjects = $plan && isset($plan->features['max_projects']) 
+                ? $plan->features['max_projects'] 
+                : 0;
+            
+            Log::warning('Достигнут лимит проектов', [
+                'user_id' => $user->id,
+                'current_projects' => $user->projects()->count(),
+                'max_projects' => $maxProjects, // null = безлимит
+                'subscription_type' => $user->subscription_type,
+                'plan_found' => $plan ? 'yes' : 'no'
+            ]);
             
             $message = $maxProjects === 1 
                 ? 'Достигнут лимит проектов для бесплатного тарифа (1 проект). Оформите подписку для создания большего количества проектов.'
@@ -89,6 +109,30 @@ class ProjectController extends Controller
             
             return redirect()->back()->with('error', $message);
         }
+
+        Log::info('Начало валидации данных');
+
+        // Фильтруем пустые этапы и участников перед валидацией
+        $requestData = $request->all();
+        
+        // Фильтруем пустые этапы (где нет имени)
+        if (isset($requestData['stages']) && is_array($requestData['stages'])) {
+            $requestData['stages'] = array_filter($requestData['stages'], function($stage) {
+                return !empty($stage['name']) || !empty($stage['start_date']) || !empty($stage['end_date']);
+            });
+            $requestData['stages'] = array_values($requestData['stages']); // Переиндексация
+        }
+        
+        // Фильтруем пустых участников (где нет имени или телефона)
+        if (isset($requestData['participants']) && is_array($requestData['participants'])) {
+            $requestData['participants'] = array_filter($requestData['participants'], function($participant) {
+                return !empty($participant['name']) || !empty($participant['phone']);
+            });
+            $requestData['participants'] = array_values($requestData['participants']); // Переиндексация
+        }
+        
+        // Заменяем данные запроса на отфильтрованные
+        $request->merge($requestData);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -108,15 +152,22 @@ class ProjectController extends Controller
             'participants.*.role' => 'required|in:Клиент,Исполнитель',
         ]);
 
+        Log::info('Валидация успешна', ['validated_data' => $validated]);
+
         // Используем транзакцию для атомарности операции
-        $project = DB::transaction(function () use ($validated) {
-            $project = Auth::user()->projects()->create([
-            'name' => $validated['name'],
-            'address' => $validated['address'],
-            'work_type' => $validated['work_type'] ?? null,
-            'markup_percent' => $validated['markup_percent'] ?? 0,
-            'status' => 'В работе',
-        ]);
+        try {
+            $project = DB::transaction(function () use ($validated) {
+                Log::info('Начало транзакции создания проекта');
+                
+                $project = Auth::user()->projects()->create([
+                'name' => $validated['name'],
+                'address' => $validated['address'],
+                'work_type' => $validated['work_type'] ?? null,
+                'markup_percent' => $validated['markup_percent'] ?? 0,
+                'status' => 'В работе',
+            ]);
+            
+                Log::info('Проект создан в БД', ['project_id' => $project->id]);
 
         // Создаём роль владельца в новой системе ролей
         \App\Models\ProjectUserRole::create([
@@ -250,8 +301,30 @@ class ProjectController extends Controller
             }
         }
 
-        return $project; // Возвращаем созданный проект из транзакции
-    });
+            return $project; // Возвращаем созданный проект из транзакции
+        });
+
+            Log::info('Транзакция завершена успешно', [
+                'project_id' => $project->id,
+                'project_name' => $project->name
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Ошибка при создании проекта', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id()
+            ]);
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Произошла ошибка при создании проекта: ' . $e->getMessage());
+        }
+
+        Log::info('Проект успешно создан', [
+            'project_id' => $project->id,
+            'project_name' => $project->name
+        ]);
 
         return redirect()->route('projects.show', $project)->with([
             'success' => 'Проект успешно создан!',

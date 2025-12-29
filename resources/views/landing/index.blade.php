@@ -61,7 +61,19 @@
     <meta name="twitter:description" content="Автоматизируйте управление строительством. Контроль проектов, сметы, документы в одной системе.">
     <meta name="twitter:image" content="{{ asset('images/og-image.jpg') }}">
     <meta name="twitter:image:alt" content="Система управления строительными проектами">
-    
+    <!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106059483', 'ym');
+
+    ym(106059483, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/106059483" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
     <!-- Structured Data (JSON-LD) - Расширенная микроразметка -->
     <script type="application/ld+json">
     {
@@ -590,22 +602,21 @@
             
             <div class="pricing-grid">
                 @foreach($plans as $plan)
-                <div class="pricing-card {{ $plan->slug === 'yearly' ? 'popular' : '' }}">
-                    @if($plan->slug === 'yearly')
-                    <div class="pricing-badge">Самая выгодная</div>
+                <div class="pricing-card {{ isset($plan->popular) && $plan->popular ? 'popular' : '' }}">
+                    @if(isset($plan->popular) && $plan->popular)
+                    <div class="pricing-badge">Самый популярный</div>
                     @endif
                     
                     <h3 class="pricing-name">{{ $plan->name }}</h3>
                     <div class="pricing-price">
-                        @if($plan->slug === 'yearly')
-                            <span class="price-amount">{{ number_format($plan->price / 12, 0, ',', ' ') }} ₽</span>
-                            <span class="price-period">/месяц</span>
-                            <div style="font-size: 14px; color: #6ba97f; margin-top: 4px;">
-                                Оплата {{ number_format($plan->price, 0, ',', ' ') }} ₽/год
+                        <span class="price-amount">{{ number_format($plan->price, 0, ',', ' ') }} ₽</span>
+                        <span class="price-period">/{{ $plan->period }}</span>
+                        @if(isset($plan->yearly_price))
+                            <div style="font-size: 14px; color: #6ba97f; margin-top: 8px;">
+                                Годовая: {{ number_format($plan->yearly_price, 0, ',', ' ') }} ₽
+                                <br>
+                                <small style="color: #888;">(экономия {{ number_format($plan->price * 12 - $plan->yearly_price, 0, ',', ' ') }} ₽)</small>
                             </div>
-                        @else
-                            <span class="price-amount">{{ number_format($plan->price, 0, ',', ' ') }} ₽</span>
-                            <span class="price-period">/месяц</span>
                         @endif
                     </div>
                     <p class="pricing-description">{{ $plan->description }}</p>
@@ -712,7 +723,7 @@
                         <i class="bi bi-plus"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>14 дней бесплатного тестирования. Далее: Стартовый тариф 490₽/мес (4 900₽/год), Профессиональный 1 290₽/мес (12 900₽/год), Корпоративный 2 990₽/мес (29 900₽/год). Годовая подписка экономит 2 платежа в год.</p>
+                        <p>14 дней бесплатного тестирования без привязки карты. Далее: Стартовый тариф 490₽/мес (4 900₽/год), Профессиональный 1 290₽/мес (12 900₽/год), Корпоративный 2 990₽/мес (29 900₽/год). При годовой подписке экономия от 980₽ до 5 980₽.</p>
                     </div>
                 </div>
                 
@@ -1073,5 +1084,6 @@
             localStorage.setItem('pwa-install-dismissed', 'true');
         });
     </script>
+    
 </body>
 </html>

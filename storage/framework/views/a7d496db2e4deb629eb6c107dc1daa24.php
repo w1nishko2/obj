@@ -8,12 +8,37 @@
             <div class="subscription-warning-content">
                 <i class="bi bi-info-circle"></i>
                 <div>
-                    <strong>Стартовый тариф "Прораб Старт"</strong>
-                    <p>У вас осталось <?php echo e(Auth::user()->getRemainingProjectsCount()); ?> 
-                    <?php echo e(Auth::user()->getRemainingProjectsCount() === 1 ? 'проект' : 'проекта'); ?> из 2. 
+                    <strong>Текущий тариф: <?php if(Auth::user()->subscription_type === 'free'): ?> Бесплатный (1 проект) <?php elseif(str_contains(Auth::user()->subscription_type, 'starter')): ?> Стартовый (до 3 проектов) <?php elseif(str_contains(Auth::user()->subscription_type, 'professional')): ?> Профессиональный (до 10 проектов) <?php elseif(str_contains(Auth::user()->subscription_type, 'corporate')): ?> Корпоративный (безлимит) <?php else: ?> Не активен <?php endif; ?></strong>
+                    <?php
+                        $remaining = Auth::user()->getRemainingProjectsCount();
+                        $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
+                        // Правильная обработка null (безлимит)
+                        $maxProjects = ($plan && array_key_exists('max_projects', $plan->features)) 
+                            ? $plan->features['max_projects'] 
+                            : 0;
+                    ?>
+                    <p>У вас осталось 
+                    <?php if($remaining === null): ?>
+                        безлимитное количество проектов
+                    <?php else: ?>
+                        <?php echo e($remaining); ?> <?php echo e($remaining === 1 ? 'проект' : ($remaining > 1 && $remaining < 5 ? 'проекта' : 'проектов')); ?> из <?php echo e($maxProjects); ?>
+
+                    <?php endif; ?>. 
                     <a href="<?php echo e(route('pricing.index')); ?>">Оформите подписку</a> для снятия ограничений.</p>
                 </div>
             </div>
+        </div>
+    <?php endif; ?>
+
+    
+    <?php if($errors->any()): ?>
+        <div class="alert alert-danger mb-3">
+            <h5><i class="bi bi-exclamation-triangle"></i> Ошибки при создании проекта:</h5>
+            <ul class="mb-0">
+                <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <li><?php echo e($error); ?></li>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+            </ul>
         </div>
     <?php endif; ?>
 

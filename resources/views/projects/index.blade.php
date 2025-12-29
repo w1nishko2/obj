@@ -26,7 +26,10 @@
                     @php
                         $remaining = Auth::user()->getRemainingProjectsCount();
                         $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
-                        $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+                        // Правильная обработка null (безлимит)
+                        $maxProjects = ($plan && array_key_exists('max_projects', $plan->features)) 
+                            ? $plan->features['max_projects'] 
+                            : 0;
                     @endphp
                     <p>Доступно проектов: 
                         @if($remaining === null)

@@ -24,8 +24,22 @@
             <div class="subscription-warning-content">
                 <i class="bi bi-info-circle"></i>
                 <div>
-                    <strong>Стартовый тариф "Прораб Старт"</strong>
-                    <p>Доступно проектов: <?php echo e(Auth::user()->getRemainingProjectsCount()); ?> из 2. 
+                    <strong>Текущий тариф: <?php if(Auth::user()->subscription_type === 'free'): ?> Бесплатный <?php elseif(str_contains(Auth::user()->subscription_type, 'starter')): ?> Стартовый <?php elseif(str_contains(Auth::user()->subscription_type, 'professional')): ?> Профессиональный <?php elseif(str_contains(Auth::user()->subscription_type, 'corporate')): ?> Корпоративный <?php else: ?> Не активен <?php endif; ?></strong>
+                    <?php
+                        $remaining = Auth::user()->getRemainingProjectsCount();
+                        $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
+                        // Правильная обработка null (безлимит)
+                        $maxProjects = ($plan && array_key_exists('max_projects', $plan->features)) 
+                            ? $plan->features['max_projects'] 
+                            : 0;
+                    ?>
+                    <p>Доступно проектов: 
+                        <?php if($remaining === null): ?>
+                            безлимит
+                        <?php else: ?>
+                            <?php echo e($remaining); ?> из <?php echo e($maxProjects); ?>
+
+                        <?php endif; ?> 
                     <a href="<?php echo e(route('pricing.index')); ?>">Оформите подписку</a> для снятия ограничений.</p>
                 </div>
             </div>

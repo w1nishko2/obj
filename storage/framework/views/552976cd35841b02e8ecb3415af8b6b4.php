@@ -83,7 +83,7 @@
                                 <?php echo csrf_field(); ?>
                                 <input type="hidden" name="plan_slug" value="<?php echo e($plan->slug); ?>">
                                 <button type="submit" class="pricing-btn <?php echo e($plan->slug === 'yearly' ? 'pricing-btn-best' : ''); ?> <?php echo e($plan->slug === 'free' ? 'pricing-btn-free' : ''); ?>">
-                                    <i class="bi bi-credit-card"></i> <?php echo e($plan->slug === 'free' ? 'Оплатить 50 ₽' : 'Оформить подписку'); ?>
+                                    <i class="bi bi-credit-card"></i> <?php echo e($plan->slug === 'free' ? 'Активировать бесплатно' : 'Оформить подписку'); ?>
 
                                 </button>
                             </form>
@@ -159,7 +159,8 @@
                     </h2>
                     <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                         <div class="accordion-body">
-                            На стартовом тарифе "Прораб Старт" вы можете создать максимум 2 проекта одновременно. 
+                            На бесплатном тарифе вы можете создать 1 проект на 14 дней для тестирования. 
+                            На стартовом тарифе (490₽/мес) - до 3 активных проектов с полным функционалом включая сметы и документы. 
                             Вам доступно создание этапов, задач, добавление участников, загрузка файлов и отслеживание прогресса. 
                             Однако генерация документов (смет, актов, договоров) и архивирование проектов доступны только на платных тарифах.
                         </div>
@@ -188,7 +189,7 @@
                     <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
                         <div class="accordion-body">
                             Функционал обеих подписок полностью идентичен. Разница только в стоимости: 
-                            годовая подписка обходится на 6 000 ₽ дешевле (экономия 25%), что составляет 1 500 ₽/месяц вместо 2 000 ₽/месяц.
+                            годовая подписка дешевле на 17%. Например, Профессиональный тариф: 12 900₽/год вместо 15 480₽ (экономия 2 580₽).
                         </div>
                     </div>
                 </div>

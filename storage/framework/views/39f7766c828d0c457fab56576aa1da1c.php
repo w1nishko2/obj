@@ -78,43 +78,45 @@
     bottom: 20px;
     right: 20px;
     z-index: 1000;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #6ba97f 0%, #5a9170 100%);
     color: white;
     border: none;
-    border-radius: 50px;
-    padding: 12px 24px;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
     font-weight: 600;
-    font-size: 0.95rem;
-    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    font-size: 24px;
+    box-shadow: 0 4px 16px rgba(107, 169, 127, 0.4);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
     animation: slideInUp 0.5s ease;
 }
 
 .pwa-install-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+    transform: scale(1.1);
+    box-shadow: 0 6px 24px rgba(107, 169, 127, 0.5);
+    background: linear-gradient(135deg, #5a9170 0%, #498862 100%);
 }
 
 .pwa-install-button:active {
-    transform: translateY(0);
+    transform: scale(0.95);
 }
 
 .pwa-install-button i {
-    font-size: 1.2rem;
+    font-size: 24px;
 }
 
 @keyframes slideInUp {
     from {
         opacity: 0;
-        transform: translateY(50px);
+        transform: translateY(50px) scale(0.8);
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
@@ -134,7 +136,7 @@
     width: 32px;
     height: 32px;
     min-width: 32px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #6ba97f 0%, #5a9170 100%);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -148,31 +150,46 @@
     flex: 1;
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
     .pwa-install-button {
-        bottom: 15px;
-        right: 15px;
-        padding: 10px 20px;
-        font-size: 0.9rem;
+        bottom: 16px;
+        right: 16px;
+        width: 56px;
+        height: 56px;
+        font-size: 22px;
     }
     
-    .pwa-install-button span {
-        display: none;
+    .pwa-install-button i {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 400px) {
+    .pwa-install-button {
+        bottom: 14px;
+        right: 14px;
+        width: 52px;
+        height: 52px;
+        font-size: 20px;
+    }
+    
+    .pwa-install-button i {
+        font-size: 20px;
     }
 }
 
 /* Анимация пульсации для привлечения внимания */
 @keyframes pulse {
     0%, 100% {
-        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        box-shadow: 0 4px 16px rgba(107, 169, 127, 0.4);
     }
     50% {
-        box-shadow: 0 4px 25px rgba(37, 99, 235, 0.6);
+        box-shadow: 0 6px 24px rgba(107, 169, 127, 0.6);
     }
 }
 
 .pwa-install-button.pulse {
-    animation: pulse 2s infinite;
+    animation: pulse 3s infinite;
 }
 </style>
 
@@ -225,10 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function showInstallButton(isIOSDevice) {
         const button = document.createElement('button');
         button.className = 'pwa-install-button pulse';
-        button.innerHTML = `
-            <i class="bi bi-download"></i>
-            <span>Установить приложение</span>
-        `;
+        button.innerHTML = `<i class="bi bi-download"></i>`;
         
         button.addEventListener('click', async () => {
             if (isIOSDevice) {

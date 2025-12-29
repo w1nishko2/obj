@@ -61,7 +61,19 @@
     <meta name="twitter:description" content="Автоматизируйте управление строительством. Контроль проектов, сметы, документы в одной системе.">
     <meta name="twitter:image" content="<?php echo e(asset('images/og-image.jpg')); ?>">
     <meta name="twitter:image:alt" content="Система управления строительными проектами">
-    
+    <!-- Yandex.Metrika counter -->
+<script type="text/javascript">
+    (function(m,e,t,r,i,k,a){
+        m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+        m[i].l=1*new Date();
+        for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+        k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+    })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106059483', 'ym');
+
+    ym(106059483, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", accurateTrackBounce:true, trackLinks:true});
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/106059483" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
     <!-- Structured Data (JSON-LD) - Расширенная микроразметка -->
     <script type="application/ld+json">
     {
@@ -590,22 +602,21 @@
             
             <div class="pricing-grid">
                 <?php $__currentLoopData = $plans; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $plan): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                <div class="pricing-card <?php echo e($plan->slug === 'yearly' ? 'popular' : ''); ?>">
-                    <?php if($plan->slug === 'yearly'): ?>
-                    <div class="pricing-badge">Самая выгодная</div>
+                <div class="pricing-card <?php echo e(isset($plan->popular) && $plan->popular ? 'popular' : ''); ?>">
+                    <?php if(isset($plan->popular) && $plan->popular): ?>
+                    <div class="pricing-badge">Самый популярный</div>
                     <?php endif; ?>
                     
                     <h3 class="pricing-name"><?php echo e($plan->name); ?></h3>
                     <div class="pricing-price">
-                        <?php if($plan->slug === 'yearly'): ?>
-                            <span class="price-amount"><?php echo e(number_format($plan->price / 12, 0, ',', ' ')); ?> ₽</span>
-                            <span class="price-period">/месяц</span>
-                            <div style="font-size: 14px; color: #6ba97f; margin-top: 4px;">
-                                Оплата <?php echo e(number_format($plan->price, 0, ',', ' ')); ?> ₽/год
+                        <span class="price-amount"><?php echo e(number_format($plan->price, 0, ',', ' ')); ?> ₽</span>
+                        <span class="price-period">/<?php echo e($plan->period); ?></span>
+                        <?php if(isset($plan->yearly_price)): ?>
+                            <div style="font-size: 14px; color: #6ba97f; margin-top: 8px;">
+                                Годовая: <?php echo e(number_format($plan->yearly_price, 0, ',', ' ')); ?> ₽
+                                <br>
+                                <small style="color: #888;">(экономия <?php echo e(number_format($plan->price * 12 - $plan->yearly_price, 0, ',', ' ')); ?> ₽)</small>
                             </div>
-                        <?php else: ?>
-                            <span class="price-amount"><?php echo e(number_format($plan->price, 0, ',', ' ')); ?> ₽</span>
-                            <span class="price-period">/месяц</span>
                         <?php endif; ?>
                     </div>
                     <p class="pricing-description"><?php echo e($plan->description); ?></p>
@@ -713,7 +724,7 @@
                         <i class="bi bi-plus"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Стартовый тариф всего 50 рублей в месяц для начинающих. Для профессионалов есть месячная подписка 2000 ₽/мес или годовая 18000 ₽/год (1500 ₽/мес) с выгодой 25%.</p>
+                        <p>14 дней бесплатного тестирования без привязки карты. Далее: Стартовый тариф 490₽/мес (4 900₽/год), Профессиональный 1 290₽/мес (12 900₽/год), Корпоративный 2 990₽/мес (29 900₽/год). При годовой подписке экономия от 980₽ до 5 980₽.</p>
                     </div>
                 </div>
                 
@@ -782,7 +793,7 @@
                         <i class="bi bi-arrow-right"></i>
                     </a>
                 </div>
-                <p class="cta-note">Доступные тарифы от 50 ₽/мес • Безопасная оплата • Отмена в любой момент</p>
+                <p class="cta-note">Доступные тарифы от 490 ₽/мес • 14 дней бесплатно • Безопасная оплата • Отмена в любой момент</p>
             </div>
         </div>
     </section>
@@ -1103,6 +1114,7 @@ unset($__errorArgs, $__bag); ?>
             localStorage.setItem('pwa-install-dismissed', 'true');
         });
     </script>
+    
 </body>
 </html>
 <?php /**PATH C:\OSPanel\domains\work\resources\views\landing\index.blade.php ENDPATH**/ ?>

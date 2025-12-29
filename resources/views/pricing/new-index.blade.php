@@ -146,20 +146,26 @@
                                 <i class="bi bi-check-circle"></i> Ваш тариф
                             </button>
                         @else
-                            <form action="{{ route('payment.create') }}" method="POST" class="plan-form">
-                                @csrf
-                                <input type="hidden" name="plan_slug" class="plan-slug-input" value="{{ $slug }}">
-                                <button type="submit" class="pricing-btn @if($planData['popular'] ?? false) popular @endif">
-                                    @if($slug === 'free')
+                            @if($slug === 'free')
+                                <form action="{{ route('payment.create') }}" method="POST" class="plan-form">
+                                    @csrf
+                                    <input type="hidden" name="plan_slug" class="plan-slug-input" value="{{ $slug }}">
+                                    <button type="submit" class="pricing-btn">
                                         <i class="bi bi-gift"></i> Активировать
-                                    @else
-                                        <i class="bi bi-credit-card"></i> Выбрать тариф
-                                    @endif
+                                    </button>
+                                </form>
+                            @else
+                                <button type="button" class="pricing-btn @if($planData['popular'] ?? false) popular @endif open-payment-modal"
+                                        data-plan="{{ $slug }}"
+                                        data-name="{{ $planData['name'] }}"
+                                        data-price-monthly="{{ $planData['price_monthly'] }}"
+                                        data-price-yearly="{{ $planData['price_yearly'] }}">
+                                    <i class="bi bi-credit-card"></i> Выбрать тариф
                                 </button>
-                            </form>
-                            <small class="pricing-note">
-                                <i class="bi bi-shield-check"></i> Безопасная оплата через ЮKassa
-                            </small>
+                                <small class="pricing-note">
+                                    <i class="bi bi-shield-check"></i> Безопасная оплата через ЮKassa
+                                </small>
+                            @endif
                         @endif
                     @else
                         <button class="pricing-btn" onclick="window.location.href='{{ route('login') }}'">
@@ -541,6 +547,53 @@
         font-size: 0.85rem;
     }
 }
+
+/* Модалка оплаты */
+#paymentModal .wizard-header h2 {
+    margin-bottom: 0.5rem;
+}
+
+#paymentModal .wizard-header p {
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+#paymentModal .minimal-card-body {
+    background: #f8f9fa;
+}
+
+#paymentModal #discount-info {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 576px) {
+    #paymentModal .wizard-container {
+        padding: 0 0.5rem;
+    }
+    
+    #paymentModal .minimal-card-body {
+        padding: 0.75rem;
+    }
+    
+    #paymentModal .form-group-minimal .d-flex {
+        flex-direction: column;
+    }
+    
+    #paymentModal #apply-promocode {
+        width: 100%;
+    }
+}
 </style>
 
 <script>
@@ -567,6 +620,197 @@ document.addEventListener('DOMContentLoaded', function() {
 
     monthlyRadio.addEventListener('change', updatePricing);
     yearlyRadio.addEventListener('change', updatePricing);
+});
+</script>
+
+<!-- Модалка оплаты с промокодом -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen m-0">
+        <div class="modal-content">
+            <form action="{{ route('payment.create') }}" method="POST" id="payment-form" class="d-flex flex-column h-100">
+                @csrf
+                <input type="hidden" name="plan_slug" id="payment-plan-slug">
+                <input type="hidden" name="promocode" id="payment-promocode">
+                
+                <div class="modal-header border-0 pb-2">
+                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+                </div>
+                
+                <div class="px-4">
+                    <div class="wizard-header text-center">
+                        <h2>Оформление подписки</h2>
+                        <p id="modal-plan-name-subtitle">Выбранный тариф</p>
+                    </div>
+                </div>
+                
+                <div class="modal-body pt-0 d-flex align-items-center justify-content-center flex-grow-1">
+                    <div class="wizard-container" style="max-width: 600px; width: 100%;">
+                        <!-- Информация о тарифе -->
+                        <div class="minimal-card mb-3">
+                            <div class="minimal-card-header">
+                                <span><i class="bi bi-credit-card"></i> <span id="modal-plan-name">Тариф</span></span>
+                            </div>
+                            <div class="minimal-card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span style="font-size: 0.95rem;">Стоимость:</span>
+                                    <span style="font-size: 1.25rem; font-weight: 600;"><span id="modal-original-price">0</span> ₽</span>
+                                </div>
+                                
+                                <div id="discount-info" class="d-none">
+                                    <div class="d-flex justify-content-between align-items-center text-success mb-2" style="padding-top: 0.75rem; border-top: 1px dashed #dee2e6;">
+                                        <span style="font-size: 0.95rem;">Скидка (<span id="discount-percent">0</span>%):</span>
+                                        <span style="font-size: 1.1rem; font-weight: 600;">-<span id="discount-amount">0</span> ₽</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center" style="padding-top: 0.75rem; border-top: 2px solid #dee2e6;">
+                                        <span style="font-size: 1.1rem; font-weight: 700;">Итого к оплате:</span>
+                                        <span style="font-size: 1.5rem; font-weight: 700; color: #a70000;"><span id="modal-final-price">0</span> ₽</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Промокод -->
+                        <div class="form-group-minimal">
+                            <label><i class="bi bi-tag"></i> Промокод (необязательно)</label>
+                            <div class="d-flex gap-2">
+                                <input type="text" class="minimal-input" id="promocode" placeholder="Введите промокод" style="flex: 1;">
+                                <button type="button" class="minimal-btn minimal-btn-ghost" id="apply-promocode" style="white-space: nowrap;">
+                                    Применить
+                                </button>
+                            </div>
+                            <div id="promocode-error" class="text-danger mt-2 d-none" style="font-size: 0.9rem;"></div>
+                            <div id="promocode-success" class="text-success mt-2 d-none" style="font-size: 0.9rem;">
+                                <i class="bi bi-check-circle-fill"></i> <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer border-0 justify-content-center">
+                    <button type="button" class="minimal-btn minimal-btn-ghost" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="minimal-btn minimal-btn-primary">
+                        <i class="bi bi-credit-card"></i> Оплатить <span id="pay-button-price"></span>
+                    </button>
+                </div>
+                
+                <div class="text-center pb-3">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check"></i> Безопасная оплата через ЮKassa
+                    </small>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    const yearlyRadio = document.getElementById('yearly');
+    
+    let selectedPlan = null;
+    let currentPrice = 0;
+    let appliedPromocode = null;
+
+    // Открытие модалки при клике на "Выбрать тариф"
+    document.querySelectorAll('.open-payment-modal').forEach(button => {
+        button.addEventListener('click', function() {
+            const planSlug = this.dataset.plan;
+            const planName = this.dataset.name;
+            const priceMonthly = parseFloat(this.dataset.priceMonthly);
+            const priceYearly = parseFloat(this.dataset.priceYearly);
+            
+            const isYearly = yearlyRadio.checked;
+            currentPrice = isYearly ? priceYearly : priceMonthly;
+            selectedPlan = isYearly ? `${planSlug}_yearly` : planSlug;
+            
+            // Заполняем модалку
+            const planDisplayName = planName + (isYearly ? ' (Годовая)' : ' (Месячная)');
+            document.getElementById('modal-plan-name').textContent = planDisplayName;
+            document.getElementById('modal-plan-name-subtitle').textContent = planDisplayName;
+            document.getElementById('modal-original-price').textContent = currentPrice;
+            document.getElementById('payment-plan-slug').value = selectedPlan;
+            document.getElementById('pay-button-price').textContent = currentPrice + ' ₽';
+            
+            // Сбрасываем промокод
+            document.getElementById('promocode').value = '';
+            document.getElementById('payment-promocode').value = '';
+            document.getElementById('discount-info').classList.add('d-none');
+            document.getElementById('promocode-error').classList.add('d-none');
+            document.getElementById('promocode-success').classList.add('d-none');
+            appliedPromocode = null;
+            
+            paymentModal.show();
+        });
+    });
+
+    // Применение промокода
+    document.getElementById('apply-promocode').addEventListener('click', function() {
+        const promocode = document.getElementById('promocode').value.trim();
+        
+        if (!promocode) {
+            showError('Введите промокод');
+            return;
+        }
+
+        // AJAX запрос на проверку промокода
+        fetch('{{ route('api.promocode.validate') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                code: promocode,
+                amount: currentPrice
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                appliedPromocode = promocode;
+                
+                // Показываем информацию о скидке
+                document.getElementById('discount-percent').textContent = data.discount_percent;
+                document.getElementById('discount-amount').textContent = data.discount_amount.toFixed(2);
+                document.getElementById('modal-final-price').textContent = data.final_amount.toFixed(2);
+                document.getElementById('pay-button-price').textContent = data.final_amount.toFixed(2) + ' ₽';
+                document.getElementById('payment-promocode').value = promocode;
+                
+                document.getElementById('discount-info').classList.remove('d-none');
+                showSuccess('Промокод применен! Скидка ' + data.discount_percent + '%');
+            } else {
+                showError(data.message || 'Промокод недействителен');
+                resetDiscount();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showError('Ошибка при проверке промокода');
+            resetDiscount();
+        });
+    });
+
+    function showError(message) {
+        const errorDiv = document.getElementById('promocode-error');
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('d-none');
+        document.getElementById('promocode-success').classList.add('d-none');
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('promocode-success');
+        successDiv.querySelector('span').textContent = message;
+        successDiv.classList.remove('d-none');
+        document.getElementById('promocode-error').classList.add('d-none');
+    }
+
+    function resetDiscount() {
+        document.getElementById('discount-info').classList.add('d-none');
+        document.getElementById('pay-button-price').textContent = currentPrice + ' ₽';
+        document.getElementById('payment-promocode').value = '';
+        appliedPromocode = null;
+    }
 });
 </script>
 @endsection

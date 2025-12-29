@@ -26,6 +26,7 @@ class User extends Authenticatable
         'subscription_type',
         'subscription_expires_at',
         'role_selected',
+        'is_admin',
         // Данные прораба
         'full_name',
         'address',
@@ -246,6 +247,12 @@ class User extends Authenticatable
         return $this->hasProjectPermission($project, 'can_generate_reports');
     }
 
+    // Проверка, является ли пользователь администратором
+    public function isAdmin()
+    {
+        return $this->is_admin === true || $this->is_admin === 1;
+    }
+
     // Методы проверки типа подписки
     public function isFreePlan()
     {
@@ -303,29 +310,56 @@ class User extends Authenticatable
     {
         // Если нет подписки - не может создавать проекты
         if (!$this->hasAnyPlan()) {
+            \Log::info('canCreateProjects: нет подписки', ['user_id' => $this->id]);
             return false;
         }
 
         // Проверяем, не истекла ли подписка
         if ($this->isSubscriptionExpired()) {
+            \Log::info('canCreateProjects: подписка истекла', ['user_id' => $this->id]);
             return false;
         }
 
         $plan = \App\Models\Plan::where('slug', $this->subscription_type)->first();
         
         if (!$plan) {
+            \Log::warning('canCreateProjects: план не найден', [
+                'user_id' => $this->id,
+                'subscription_type' => $this->subscription_type
+            ]);
             return false;
         }
 
-        $maxProjects = $plan->features['max_projects'] ?? 0;
+        // Используем array_key_exists для правильной обработки null
+        $maxProjects = array_key_exists('max_projects', $plan->features) 
+            ? $plan->features['max_projects'] 
+            : 0;
+        
+        \Log::info('canCreateProjects: проверка лимита', [
+            'user_id' => $this->id,
+            'max_projects' => $maxProjects,
+            'max_projects_type' => gettype($maxProjects),
+            'is_null' => $maxProjects === null,
+            'current_count' => $this->projects()->count()
+        ]);
         
         // null = безлимит (корпоративный тариф)
         if ($maxProjects === null) {
+            \Log::info('canCreateProjects: безлимит - разрешено', ['user_id' => $this->id]);
             return true;
         }
         
         $currentProjectsCount = $this->projects()->count();
-        return $currentProjectsCount < $maxProjects;
+        $canCreate = $currentProjectsCount < $maxProjects;
+        
+        \Log::info('canCreateProjects: результат проверки', [
+            'user_id' => $this->id,
+            'can_create' => $canCreate,
+            'current' => $currentProjectsCount,
+            'max' => $maxProjects
+        ]);
+        
+        return $canCreate;
     }
 
     public function canGenerateDocuments($project = null)
@@ -396,7 +430,10 @@ class User extends Authenticatable
             return 0;
         }
 
-        $maxProjects = $plan->features['max_projects'] ?? 0;
+        // Используем array_key_exists для правильной обработки null
+        $maxProjects = array_key_exists('max_projects', $plan->features) 
+            ? $plan->features['max_projects'] 
+            : 0;
         
         // null = безлимит
         if ($maxProjects === null) {

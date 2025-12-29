@@ -29,8 +29,8 @@
     --gradient-hero: linear-gradient(135deg, rgba(111, 111, 111, 0.05) 0%, rgba(107, 169, 127, 0.05) 100%);
     
     /* Spacing */
-    --section-padding: 120px;
-    --section-padding-mobile: 60px;
+    --section-padding: 80px;
+    --section-padding-mobile: 50px;
     --container-max-width: 1200px;
     
     /* Typography */
@@ -1507,6 +1507,424 @@ textarea.form-control {
     
     .cta-content h2 {
         font-size: 32px;
+    }
+}
+
+/* ========================================
+   ULTRA SMALL SCREENS (< 400px)
+   ======================================== */
+
+@media (max-width: 400px) {
+    /* Container & Spacing */
+    .container {
+        padding: 0 16px;
+    }
+    
+    section {
+        padding: 40px 0;
+    }
+    
+    /* Navigation */
+    .nav-content {
+        height: 64px;
+        padding: 0 12px;
+    }
+    
+    .logo {
+        font-size: 18px;
+        gap: 8px;
+    }
+    
+    .logo i {
+        font-size: 22px;
+    }
+    
+    /* Hero Section */
+    .hero {
+        padding: 80px 0 50px;
+    }
+    
+    .hero-title {
+        font-size: 28px;
+        line-height: 1.2;
+        margin-bottom: 16px;
+    }
+    
+    .hero-description {
+        font-size: 15px;
+        line-height: 1.5;
+        margin-bottom: 24px;
+    }
+    
+    .hero-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-hero-primary,
+    .btn-hero-secondary {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+    }
+    
+    .hero-stats {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+    
+    .stat-label {
+        font-size: 13px;
+    }
+    
+    /* Section Headers */
+    .section-header {
+        margin-bottom: 40px;
+    }
+    
+    .section-header h2 {
+        font-size: 24px;
+        line-height: 1.3;
+    }
+    
+    .section-header p {
+        font-size: 15px;
+    }
+    
+    .section-badge {
+        font-size: 12px;
+        padding: 4px 12px;
+    }
+    
+    /* Feature Cards */
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .feature-card {
+        padding: 20px 16px;
+    }
+    
+    .feature-card i {
+        font-size: 32px;
+    }
+    
+    .feature-card h3 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    .feature-card p {
+        font-size: 13px;
+    }
+    
+    /* Benefits */
+    .benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .benefit-item {
+        gap: 16px;
+    }
+    
+    .benefit-card {
+        padding: 20px 16px;
+    }
+    
+    .benefit-number {
+        font-size: 20px;
+        width: 36px;
+        height: 36px;
+    }
+    
+    .benefit-content h3 {
+        font-size: 16px;
+        margin-bottom: 6px;
+    }
+    
+    .benefit-content p {
+        font-size: 13px;
+    }
+    
+    /* Steps */
+    .steps-grid {
+        gap: 16px;
+    }
+    
+    .step-card {
+        padding: 20px 16px;
+    }
+    
+    .step-number {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .step-card h3 {
+        font-size: 16px;
+    }
+    
+    .step-card p {
+        font-size: 13px;
+    }
+    
+    /* Pricing */
+    .pricing-grid {
+        gap: 20px;
+    }
+    
+    .pricing-card {
+        padding: 24px 20px;
+    }
+    
+    .pricing-name {
+        font-size: 20px;
+    }
+    
+    .price-amount {
+        font-size: 36px;
+    }
+    
+    .price-period {
+        font-size: 14px;
+    }
+    
+    .pricing-description {
+        font-size: 14px;
+        min-height: auto;
+    }
+    
+    .pricing-features li {
+        font-size: 13px;
+    }
+    
+    .btn-pricing {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    /* Testimonials */
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .testimonial-card {
+        padding: 20px 16px;
+    }
+    
+    .testimonial-text {
+        font-size: 14px;
+    }
+    
+    .author-name {
+        font-size: 14px;
+    }
+    
+    .author-role {
+        font-size: 12px;
+    }
+    
+    /* CTA Section */
+    .cta-content h2 {
+        font-size: 24px;
+        line-height: 1.3;
+        margin-bottom: 12px;
+    }
+    
+    .cta-content p {
+        font-size: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .cta-buttons {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-cta-primary,
+    .btn-cta-secondary {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+    }
+    
+    /* Footer */
+    .footer-content {
+        padding: 32px 0;
+    }
+    
+    .footer-brand h3 {
+        font-size: 18px;
+    }
+    
+    .footer-brand p {
+        font-size: 13px;
+    }
+    
+    .footer-column h4 {
+        font-size: 14px;
+    }
+    
+    .footer-column ul li a {
+        font-size: 13px;
+    }
+    
+    .social-links a {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    /* Buttons Global */
+    .btn-primary,
+    .btn-outline,
+    .btn-submit {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    /* Form Elements */
+    input[type="email"],
+    input[type="text"],
+    textarea {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+    
+    /* Mockup Cards */
+    .mockup-card {
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .mockup-card i {
+        font-size: 24px;
+    }
+    
+    .mockup-title {
+        font-size: 14px;
+    }
+    
+    .mockup-subtitle {
+        font-size: 12px;
+    }
+    
+    .mockup-card:nth-child(2) {
+        margin-left: 20px;
+    }
+    
+    /* PWA Install */
+    #pwa-install-container {
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .pwa-install-button {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .pwa-install-button i {
+        font-size: 20px;
+    }
+}
+
+/* ========================================
+   EXTRA SMALL SCREENS (< 360px)
+   ======================================== */
+
+@media (max-width: 360px) {
+    /* Ultra compact mode */
+    .container {
+        padding: 0 12px;
+    }
+    
+    section {
+        padding: 32px 0;
+    }
+    
+    .hero-title {
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+    
+    .hero-description {
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    
+    .section-header h2 {
+        font-size: 22px;
+    }
+    
+    .section-header p {
+        font-size: 14px;
+    }
+    
+    .feature-card,
+    .benefit-card,
+    .step-card,
+    .testimonial-card {
+        padding: 16px 12px;
+    }
+    
+    .benefit-item {
+        gap: 12px;
+    }
+    
+    .benefit-number {
+        width: 32px;
+        height: 32px;
+        font-size: 18px;
+    }
+    
+    .benefit-content h3 {
+        font-size: 15px;
+    }
+    
+    .benefit-content p {
+        font-size: 12px;
+    }
+    
+    .pricing-card {
+        padding: 20px 16px;
+    }
+    
+    .price-amount {
+        font-size: 32px;
+    }
+    
+    .cta-content h2 {
+        font-size: 22px;
+    }
+    
+    .cta-content p {
+        font-size: 14px;
+    }
+    
+    .btn-hero-primary,
+    .btn-hero-secondary,
+    .btn-cta-primary,
+    .btn-cta-secondary,
+    .btn-pricing {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    .stat-number {
+        font-size: 20px;
+    }
+    
+    .stat-label {
+        font-size: 12px;
     }
 }
 

@@ -33,6 +33,7 @@ class PaymentController extends Controller
     {
         $request->validate([
             'plan_slug' => 'required|string|exists:plans,slug',
+            'promocode' => 'nullable|string',
         ]);
 
         $user = auth()->user();
@@ -56,6 +57,24 @@ class PaymentController extends Controller
             return $this->activateFreePlan($user, $plan);
         }
 
+        // Обработка промокода
+        $originalAmount = $plan->price;
+        $finalAmount = $originalAmount;
+        $discountAmount = 0;
+        $discountPercent = 0;
+        $promocode = null;
+
+        if ($request->filled('promocode')) {
+            $promocode = \App\Models\Promocode::where('code', $request->promocode)->first();
+            
+            if ($promocode && $promocode->isValid()) {
+                $result = $promocode->apply($originalAmount);
+                $finalAmount = $result['final_amount'];
+                $discountAmount = $result['discount_amount'];
+                $discountPercent = $result['discount_percent'];
+            }
+        }
+
         try {
             // Генерируем уникальный идентификатор платежа
             $idempotenceKey = Str::uuid()->toString();
@@ -66,15 +85,21 @@ class PaymentController extends Controller
                 'plan_id' => $plan->id,
                 'yookassa_payment_id' => 'pending_' . $idempotenceKey,
                 'status' => 'pending',
-                'amount' => $plan->price,
+                'amount' => $finalAmount,
                 'currency' => 'RUB',
-                'description' => "Оплата тарифа \"{$plan->name}\"",
+                'description' => "Оплата тарифа \"{$plan->name}\"" . ($promocode ? " (промокод: {$promocode->code})" : ""),
+                'metadata' => [
+                    'original_amount' => $originalAmount,
+                    'discount_amount' => $discountAmount,
+                    'discount_percent' => $discountPercent,
+                    'promocode_id' => $promocode ? $promocode->id : null,
+                ],
             ]);
 
             // Создаем платеж в YooKassa
             $yookassaPayment = $this->client->createPayment([
                 'amount' => [
-                    'value' => number_format((float)$plan->price, 2, '.', ''),
+                    'value' => number_format((float)$finalAmount, 2, '.', ''),
                     'currency' => 'RUB',
                 ],
                 'confirmation' => [
@@ -82,20 +107,21 @@ class PaymentController extends Controller
                     'return_url' => route('payment.success', ['payment' => $payment->id]),
                 ],
                 'capture' => true,
-                'description' => "Оплата тарифа \"{$plan->name}\" для пользователя {$user->name}",
+                'description' => "Оплата тарифа \"{$plan->name}\" для пользователя {$user->name}" . ($promocode ? " (скидка {$discountPercent}%)" : ""),
                 'metadata' => [
                     'user_id' => $user->id,
                     'plan_id' => $plan->id,
                     'payment_id' => $payment->id,
+                    'promocode_id' => $promocode ? $promocode->id : null,
                 ],
             ], $idempotenceKey);
 
             // Обновляем ID платежа от YooKassa
             $payment->update([
                 'yookassa_payment_id' => $yookassaPayment->getId(),
-                'metadata' => [
+                'metadata' => array_merge($payment->metadata ?? [], [
                     'confirmation_url' => $yookassaPayment->getConfirmation()->getConfirmationUrl(),
-                ],
+                ]),
             ]);
 
             // Перенаправляем на страницу оплаты YooKassa
@@ -207,6 +233,32 @@ class PaymentController extends Controller
                     ],
                 ]),
             ]);
+
+            // Обрабатываем промокод, если был использован
+            if (!empty($payment->metadata['promocode_id'])) {
+                $promocode = \App\Models\Promocode::find($payment->metadata['promocode_id']);
+                
+                if ($promocode) {
+                    // Увеличиваем счетчик использований
+                    $promocode->incrementUsage();
+                    
+                    // Создаем запись об использовании промокода
+                    \App\Models\PromocodeUsage::create([
+                        'promocode_id' => $promocode->id,
+                        'user_id' => $payment->user_id,
+                        'payment_id' => $payment->id,
+                        'original_amount' => $payment->metadata['original_amount'] ?? $payment->amount,
+                        'discount_amount' => $payment->metadata['discount_amount'] ?? 0,
+                        'final_amount' => $payment->amount,
+                    ]);
+                    
+                    Log::info('Promocode usage recorded', [
+                        'promocode_id' => $promocode->id,
+                        'payment_id' => $payment->id,
+                        'discount_amount' => $payment->metadata['discount_amount'] ?? 0,
+                    ]);
+                }
+            }
 
             // Создаем или обновляем подписку пользователя
             $subscription = Subscription::create([

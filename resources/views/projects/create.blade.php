@@ -12,7 +12,10 @@
                     @php
                         $remaining = Auth::user()->getRemainingProjectsCount();
                         $plan = \App\Models\Plan::where('slug', Auth::user()->subscription_type)->first();
-                        $maxProjects = $plan ? ($plan->features['max_projects'] ?? 0) : 0;
+                        // Правильная обработка null (безлимит)
+                        $maxProjects = ($plan && array_key_exists('max_projects', $plan->features)) 
+                            ? $plan->features['max_projects'] 
+                            : 0;
                     @endphp
                     <p>У вас осталось 
                     @if($remaining === null)
@@ -23,6 +26,18 @@
                     <a href="{{ route('pricing.index') }}">Оформите подписку</a> для снятия ограничений.</p>
                 </div>
             </div>
+        </div>
+    @endif
+
+    {{-- Отображение ошибок валидации --}}
+    @if ($errors->any())
+        <div class="alert alert-danger mb-3">
+            <h5><i class="bi bi-exclamation-triangle"></i> Ошибки при создании проекта:</h5>
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 

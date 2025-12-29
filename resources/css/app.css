@@ -120,7 +120,7 @@ body {
     border-color: var(--color-primary);
 }
 
-.dropdown-menu {
+.dropdown-menu:not(.minimal-dropdown) {
     animation: slideDown 0.2s ease;
 }
 
@@ -751,19 +751,19 @@ i[class*=" bi-"] {
 }
 
 /* Dropdown */
-.dropdown-menu {
+.dropdown-menu:not(.minimal-dropdown) {
     border: none !important;
     box-shadow: var(--shadow-lg);
     background: var(--color-white);
 }
 
-.dropdown-item {
+.dropdown-item:not(.minimal-dropdown .dropdown-item) {
     color: var(--color-dark);
     padding: 0.625rem 1.25rem;
     transition: all 0.2s ease;
 }
 
-.dropdown-item:hover {
+.dropdown-item:not(.minimal-dropdown .dropdown-item):hover {
     background: var(--color-light);
     color: var(--color-dark);
 }

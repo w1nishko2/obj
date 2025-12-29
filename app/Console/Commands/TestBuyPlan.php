@@ -105,7 +105,10 @@ class TestBuyPlan extends Command
             $this->line("   canGenerateEstimates(): " . ($user->canGenerateEstimates() ? '✅ true' : '❌ false'));
             $this->line("   canGenerateDocuments(): " . ($user->canGenerateDocuments() ? '✅ true' : '❌ false'));
             
-            $maxProjects = $plan->features['max_projects'] ?? 0;
+            // Правильная обработка null (безлимит)
+            $maxProjects = array_key_exists('max_projects', $plan->features) 
+                ? $plan->features['max_projects'] 
+                : 0;
             $remaining = $user->getRemainingProjectsCount();
             $this->line("   Лимит проектов: " . ($maxProjects === null ? 'безлимит' : "{$maxProjects} (осталось: " . ($remaining === null ? '∞' : $remaining) . ")"));
 

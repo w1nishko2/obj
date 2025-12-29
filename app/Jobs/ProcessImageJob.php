@@ -25,6 +25,9 @@ class ProcessImageJob implements ShouldQueue
     {
         $this->imagePath = $imagePath;
         $this->disk = $disk;
+        
+        // Устанавливаем отдельную очередь для обработки изображений
+        $this->onQueue('images');
     }
 
     /**

@@ -174,6 +174,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/push/send-all', [App\Http\Controllers\PushNotificationController::class, 'sendToAll'])->name('push.send-all');
 });
 
+// Админ-панель (только для администраторов)
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [App\Http\Controllers\AdminController::class, 'index'])->name('index');
+    Route::get('/clients', [App\Http\Controllers\AdminController::class, 'clients'])->name('clients');
+    Route::post('/users/{userId}/role', [App\Http\Controllers\AdminController::class, 'updateUserRole'])->name('users.update-role');
+    Route::post('/users/{userId}/subscription', [App\Http\Controllers\AdminController::class, 'updateUserSubscription'])->name('users.update-subscription');
+    
+    // Промокоды
+    Route::get('/promocodes', [App\Http\Controllers\AdminController::class, 'promocodes'])->name('promocodes');
+    Route::post('/promocodes', [App\Http\Controllers\AdminController::class, 'createPromocode'])->name('promocodes.create');
+    Route::put('/promocodes/{id}', [App\Http\Controllers\AdminController::class, 'updatePromocode'])->name('promocodes.update');
+    Route::delete('/promocodes/{id}', [App\Http\Controllers\AdminController::class, 'deletePromocode'])->name('promocodes.delete');
+    Route::get('/promocodes/{id}/analytics', [App\Http\Controllers\AdminController::class, 'promocodeAnalytics'])->name('promocodes.analytics');
+});
+
+// API для проверки промокодов (доступно авторизованным пользователям)
+Route::middleware(['auth'])->post('/api/promocode/validate', [App\Http\Controllers\AdminController::class, 'validatePromocode'])->name('api.promocode.validate');
+
 // Публичные push-маршруты (без авторизации)
 Route::get('/push/vapid-public-key', [App\Http\Controllers\PushSubscriptionController::class, 'getVapidPublicKey'])->name('push.vapid-key');
 

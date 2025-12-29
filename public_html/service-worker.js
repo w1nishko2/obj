@@ -1,29 +1,18 @@
-const CACHE_NAME = 'obekt-plus-v2';
+const CACHE_NAME = 'obekt-plus-v7';
 const urlsToCache = [
   '/offline.html',
-  '/manifest.json',
-  '/js/webpush-manager.js'
+  '/css/minimal.css',
+  'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css'
 ];
 
-// Установка Service Worker и кеширование ресурсов
+// Установка Service Worker
 self.addEventListener('install', (event) => {
   console.log('[Service Worker] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[Service Worker] Caching app shell');
-        // Кешируем каждый ресурс отдельно, игнорируя ошибки
-        return Promise.allSettled(
-          urlsToCache.map(url => 
-            cache.add(url).catch(err => {
-              console.warn(`[Service Worker] Failed to cache ${url}:`, err);
-              return null;
-            })
-          )
-        );
-      })
-      .then(() => {
-        console.log('[Service Worker] Caching completed');
+        console.log('[Service Worker] Caching basic resources');
+        return cache.addAll(urlsToCache);
       })
       .catch((error) => {
         console.error('[Service Worker] Cache failed:', error);
@@ -32,7 +21,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// Активация Service Worker и очистка старых кешей
+// Активация Service Worker
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating...');
   event.waitUntil(
@@ -50,51 +39,75 @@ self.addEventListener('activate', (event) => {
   return self.clients.claim();
 });
 
-// Стратегия кеширования: Network First, затем Cache
+// Fetch - простое кеширование страниц
 self.addEventListener('fetch', (event) => {
   // Игнорируем не-GET запросы
   if (event.request.method !== 'GET') {
     return;
   }
 
-  // Игнорируем chrome extensions и другие схемы
+  // Игнорируем chrome extensions
   if (!event.request.url.startsWith('http')) {
     return;
   }
 
+  const url = new URL(event.request.url);
+  
+  // Игнорируем Vite dev server
+  if (url.port === '5173' || url.pathname.includes('/@vite/') || url.pathname.includes('/resources/')) {
+    return;
+  }
+
+  // Игнорируем внешние домены кроме CDN иконок
+  const isOwnDomain = url.hostname === 'work' || 
+                      url.hostname === 'localhost' || 
+                      url.hostname === '127.0.0.1' ||
+                      url.hostname.endsWith('.work');
+  
+  const isAllowedCDN = url.hostname === 'cdn.jsdelivr.net';
+  
+  if (!isOwnDomain && !isAllowedCDN) {
+    return;
+  }
+
+  // Network First для всех запросов
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Проверяем валидность ответа
-        if (!response || response.status !== 200 || response.type === 'error') {
-          return response;
-        }
-
-        // Клонируем ответ для кеширования
-        const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME)
-          .then((cache) => {
+        // Кешируем успешные ответы
+        if (response && response.ok) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
           });
-
+        }
         return response;
       })
       .catch(() => {
-        // Если сеть недоступна, используем кеш
+        // Возвращаем из кеша если есть
         return caches.match(event.request)
           .then((cachedResponse) => {
             if (cachedResponse) {
               return cachedResponse;
             }
 
-            // Если запрос к HTML странице и нет в кеше - показываем офлайн страницу
-            if (event.request.headers.get('accept').includes('text/html')) {
+            // Для HTML страниц показываем offline.html
+            const acceptHeader = event.request.headers.get('accept');
+            if (acceptHeader && acceptHeader.includes('text/html')) {
               return caches.match('/offline.html');
             }
-            
-            // Для остальных ресурсов - возвращаем главную страницу из кеша
-            return caches.match('/');
+
+            // Для изображений возвращаем пустой ответ
+            if (event.request.destination === 'image') {
+              return new Response('', { status: 200 });
+            }
+
+            // Для CSS/JS возвращаем пустой файл
+            if (event.request.destination === 'style' || event.request.destination === 'script') {
+              return new Response('', { status: 200 });
+            }
+
+            return new Response('', { status: 200 });
           });
       })
   );
@@ -102,150 +115,50 @@ self.addEventListener('fetch', (event) => {
 
 // Обработка push-уведомлений
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push notification received', event);
-  console.log('[Service Worker] Has data:', event.data !== null);
-
+  console.log('[Service Worker] Push notification received');
+  
   let notificationData = {
     title: 'Объект+',
     body: 'Новое уведомление',
     icon: '/images/icons/icon.svg',
     badge: '/images/icons/icon.svg',
     vibrate: [200, 100, 200],
-    data: {
-      dateOfArrival: Date.now(),
-      url: '/'
-    },
-    actions: [],
-    tag: 'push-notification-' + Date.now(),
-    requireInteraction: false,
-    silent: false  // Звук включён
+    data: { url: '/' }
   };
 
-  // Парсим данные из push-уведомления
   if (event.data) {
     try {
       const payload = event.data.json();
-      console.log('[Service Worker] Push payload:', payload);
-
-      // Обновляем данные уведомления из payload
-      notificationData.title = payload.title || notificationData.title;
-      notificationData.body = payload.body || notificationData.body;
-      notificationData.icon = payload.icon || notificationData.icon;
-      notificationData.badge = payload.badge || notificationData.badge;
-      notificationData.image = payload.image || notificationData.image;
-      notificationData.vibrate = payload.vibrate || notificationData.vibrate;
-      notificationData.tag = payload.tag || notificationData.tag;
-      notificationData.requireInteraction = payload.requireInteraction || false;
-      notificationData.renotify = payload.renotify || false;
-      notificationData.timestamp = payload.timestamp || Date.now();
-      notificationData.data = payload.data || notificationData.data;
-      notificationData.actions = payload.actions || [];
+      notificationData = { ...notificationData, ...payload };
     } catch (error) {
-      console.error('[Service Worker] Failed to parse push data:', error);
       notificationData.body = event.data.text();
     }
   }
 
-  // Извлекаем title отдельно
   const title = notificationData.title;
-  delete notificationData.title; // Удаляем title из опций
+  delete notificationData.title;
 
   event.waitUntil(
     self.registration.showNotification(title, notificationData)
-      .then(() => {
-        console.log('[Service Worker] Notification shown successfully with sound');
-        
-        // Дополнительно: отправляем сообщение всем клиентам для воспроизведения звука
-        return self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'PLAY_NOTIFICATION_SOUND',
-              notification: notificationData
-            });
-          });
-        });
-      })
-      .catch((error) => {
-        console.error('[Service Worker] Failed to show notification:', error);
-      })
   );
 });
 
 // Обработка клика по уведомлению
 self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification click received', event);
-  
   event.notification.close();
-
-  // Обработка действий кнопок
-  if (event.action) {
-    console.log('[Service Worker] Action clicked:', event.action);
-    
-    // Если есть кастомная обработка действий
-    if (event.notification.data && event.notification.data.actions) {
-      const actionData = event.notification.data.actions[event.action];
-      if (actionData && actionData.url) {
-        event.waitUntil(
-          clients.openWindow(actionData.url)
-        );
-        return;
-      }
-    }
-  }
-
-  // Обработка клика по самому уведомлению
+  
   const urlToOpen = event.notification.data?.url || '/';
   
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        // Ищем уже открытое окно с нужным URL
-        for (let client of windowClients) {
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
+    clients.matchAll({ type: 'window' }).then((windowClients) => {
+      for (let client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
         }
-        
-        // Если окно не найдено, открываем новое
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
-      .catch((error) => {
-        console.error('[Service Worker] Failed to handle notification click:', error);
-      })
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
   );
 });
-
-// Обработка закрытия уведомления
-self.addEventListener('notificationclose', (event) => {
-  console.log('[Service Worker] Notification closed', event.notification.tag);
-  
-  // Здесь можно отправить аналитику о закрытии уведомления
-  if (event.notification.data && event.notification.data.closeUrl) {
-    event.waitUntil(
-      fetch(event.notification.data.closeUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tag: event.notification.tag,
-          timestamp: Date.now()
-        })
-      }).catch(error => {
-        console.error('[Service Worker] Failed to report notification close:', error);
-      })
-    );
-  }
-});
-
-// Синхронизация в фоне (на будущее)
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-data') {
-    event.waitUntil(syncData());
-  }
-});
-
-async function syncData() {
-  // Здесь можно реализовать логику синхронизации данных
-  console.log('[Service Worker] Background sync');
-}

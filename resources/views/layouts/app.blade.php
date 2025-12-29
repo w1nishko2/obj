@@ -61,6 +61,12 @@
                     {{ config('app.name', 'Laravel') }}
                 </a>
                 
+                <!-- Offline Indicator -->
+                <div id="offline-indicator" class="offline-indicator" style="display: none;">
+                    <i class="bi bi-wifi-off"></i>
+                    <span>Офлайн</span>
+                </div>
+                
                 @auth
                 <div class="minimal-user-menu">
                     <button class="user-avatar" 
@@ -86,6 +92,14 @@
                                 Профиль
                             </a>
                         </li>
+                        @if(Auth::user()->isAdmin())
+                        <li>
+                            <a class="dropdown-item" href="{{ route('admin.index') }}">
+                                <i class="bi bi-speedometer2"></i>
+                                Админ-панель
+                            </a>
+                        </li>
+                        @endif
                         @if(Auth::user()->isForeman())
                         <li>
                             <a class="dropdown-item" href="{{ route('prices.index') }}">
@@ -495,6 +509,24 @@
                     });
                 }
             }
+
+            // Offline/Online indicator
+            const offlineIndicator = document.getElementById('offline-indicator');
+            
+            function updateOnlineStatus() {
+                if (!navigator.onLine) {
+                    offlineIndicator.style.display = 'flex';
+                } else {
+                    offlineIndicator.style.display = 'none';
+                }
+            }
+            
+            // Проверяем статус при загрузке
+            updateOnlineStatus();
+            
+            // Слушаем изменения статуса
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
         });
         </script>
         @endif
